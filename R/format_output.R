@@ -191,4 +191,189 @@ create_analysis_title <- function(ques, disag, aggregation_method, analysis_type
   return(paste(title_parts, collapse = " | "))
 }
 
+#' Reshape Analysis Results to Wide Format
+#'
+#' Helper function to reshape analysis results from long to wide format,
+#' with disaggregation levels as columns.
+#' 
+#' @param result_df Data frame with analysis results in long format
+#' @param aggregation_method Character string indicating the aggregation method
+#' @param disag Character string specifying the disaggregation variable name
+#' @return Data frame in wide format with disaggregation levels as columns
+reshape_to_wide <- function(result_df, aggregation_method, disag) {
+  
+  if(nrow(result_df) == 0) {
+    return(data.frame())
+  }
+  
+  # Determine the result column name
+  result_column <- switch(aggregation_method,
+                         "perc" = "Percentage",
+                         "mean" = "Mean",
+                         "median" = "Median", 
+                         "sum" = "Sum",
+                         "1stq" = "FirstQuartile",
+                         "3rdq" = "ThirdQuartile",
+                         "min" = "Min",
+                         "max" = "Max",
+                         stringr::str_to_title(aggregation_method))
+  
+  # Create wide format data
+  if(disag != "all" && disag %in% names(result_df)) {
+    
+    # For statistical functions, use a different approach since there's no Response column
+    if(aggregation_method %in% c("mean", "median", "sum", "1stq", "3rdq", "min", "max")) {
+      # For statistical functions, we need to create a single row with disaggregation levels as columns
+      disag_levels <- unique(result_df[[disag]])
+      wide_data <- data.frame()
+      
+      # Create columns for each disaggregation level
+      for(level in disag_levels) {
+        level_data <- result_df[result_df[[disag]] == level, ]
+        if(nrow(level_data) > 0) {
+          wide_data[1, paste0(result_column, "_", level)] <- level_data[[result_column]][1]
+          wide_data[1, paste0("Count_", level)] <- level_data$Count[1]
+        }
+      }
+      
+    } else {
+      # For percentage-based functions (single/multi select)
+      # Reshape to wide format
+      wide_data <- reshape(result_df, 
+                          idvar = "Response", 
+                          timevar = disag, 
+                          direction = "wide")
+      
+      # Clean up column names and reorder
+      names(wide_data) <- gsub(paste0(result_column, "."), paste0(result_column, "_"), names(wide_data))
+      names(wide_data) <- gsub(paste0("Count."), "Count_", names(wide_data))
+      names(wide_data) <- gsub(paste0("Valid."), "Valid_", names(wide_data))
+      
+      # Remove Valid columns from wide format
+      valid_cols <- names(wide_data)[grepl("^Valid_", names(wide_data))]
+      if(length(valid_cols) > 0) {
+        wide_data <- wide_data[, !names(wide_data) %in% valid_cols]
+      }
+      
+      # Reorder columns: Response, then result columns, then count columns
+      response_col <- "Response"
+      result_cols <- names(wide_data)[grepl(paste0("^", result_column, "_"), names(wide_data))]
+      count_cols <- names(wide_data)[grepl("^Count_", names(wide_data))]
+      
+      # Create ordered column names: Response, then alternating result/count for each level
+      ordered_cols <- c(response_col)
+      disag_levels <- unique(result_df[[disag]])
+      
+      for(level in disag_levels) {
+        if(paste0(result_column, "_", level) %in% names(wide_data)) {
+          ordered_cols <- c(ordered_cols, paste0(result_column, "_", level))
+        }
+        if(paste0("Count_", level) %in% names(wide_data)) {
+          ordered_cols <- c(ordered_cols, paste0("Count_", level))
+        }
+      }
+      
+      # Reorder the data frame
+      wide_data <- wide_data[, ordered_cols[ordered_cols %in% names(wide_data)]]
+      
+      # Sort by the first result column (descending)
+      if(length(result_cols) > 0) {
+        wide_data <- wide_data[order(wide_data[[result_cols[1]]], decreasing = TRUE, na.last = TRUE), ]
+      }
+    }
+    
+  } else {
+    # No disaggregation, return as is but ensure proper column names
+    wide_data <- result_df
+    if("Freq" %in% names(wide_data)) {
+      names(wide_data)[names(wide_data) == "Freq"] <- result_column
+    }
+  }
+  
+  # Remove row names
+  rownames(wide_data) <- NULL
+  
+  return(wide_data)
+}
+
+#' Create DT Table with Search and Download Options
+#'
+#' Helper function to create an interactive DT table with search and Excel download.
+#' 
+#' @param data Data frame to display
+#' @param title Character string for table title
+#' @param filename Character string for download filename
+#' @return DT table object
+create_dt_table <- function(data, title, filename = "analysis_results") {
+  
+  if(requireNamespace("DT", quietly = TRUE)) {
+    # Create DT table with search and download options
+    dt_table <- DT::datatable(
+      data,
+      caption = title,
+      extensions = c('Buttons'),
+      options = list(
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = 'excel', filename = filename),
+          list(extend = 'csv', filename = filename),
+          list(extend = 'pdf', filename = filename),
+          'copy', 'print'
+        ),
+        pageLength = 25,
+        lengthMenu = c(10, 25, 50, 100),
+        searchHighlight = TRUE,
+        language = list(
+          search = "Search:",
+          lengthMenu = "Show _MENU_ entries",
+          info = "Showing _START_ to _END_ of _TOTAL_ entries",
+          paginate = list(
+            first = "First",
+            last = "Last", 
+            `next` = "Next",
+            previous = "Previous"
+          )
+        )
+      ),
+      class = 'display nowrap compact',
+      rownames = FALSE,
+      filter = 'top'
+    )
+    
+    # Display the table in Viewer pane
+    print(dt_table)
+    return(dt_table)
+  } else {
+    # Fallback to basic HTML table
+    if(requireNamespace("htmltools", quietly = TRUE)) {
+      html_content <- htmltools::tags$div(
+        htmltools::tags$h3(title),
+        htmltools::tags$p("DT package not available. Install DT package for interactive tables."),
+        htmltools::tags$table(
+          htmltools::tags$thead(
+            htmltools::tags$tr(
+              lapply(names(data), function(col) {
+                htmltools::tags$th(col)
+              })
+            )
+          ),
+          htmltools::tags$tbody(
+            lapply(1:nrow(data), function(i) {
+              htmltools::tags$tr(
+                lapply(data[i, ], function(cell) {
+                  htmltools::tags$td(as.character(cell))
+                })
+              )
+            })
+          )
+        )
+      )
+      htmltools::html_print(html_content)
+    } else {
+      View(data)
+    }
+    return(NULL)
+  }
+}
+
 

@@ -28,7 +28,7 @@
 #'                                   disag = "region")
 #' print(mean_age_by_region)
 #' @export
-analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE) {
+analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -73,37 +73,48 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
     # Sort results from largest to smallest based on Mean column
     combined_result <- combined_result[order(combined_result$Mean, decreasing = TRUE), ]
     
+    # Reshape to wide format if requested
+    if(wide_format && !is.null(disag) && disag != "all") {
+      combined_result <- reshape_to_wide(combined_result, "mean", disag)
+    }
+    
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
-      if(requireNamespace("htmltools", quietly = TRUE)) {
-        # Create descriptive title
-        title <- create_analysis_title(ques, disag, "mean", "stat")
-        
-        # Create HTML table directly to avoid knitr warnings
-        html_content <- htmltools::tags$div(
-          htmltools::tags$h3(title),
-          htmltools::tags$table(
-            htmltools::tags$thead(
-              htmltools::tags$tr(
-                lapply(names(combined_result), function(col) {
-                  htmltools::tags$th(col)
-                })
-              )
-            ),
-            htmltools::tags$tbody(
-              lapply(1:nrow(combined_result), function(i) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, disag, "mean", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("mean_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+        dt_table_obj <- create_dt_table(combined_result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
                 htmltools::tags$tr(
-                  lapply(combined_result[i, ], function(cell) {
-                    htmltools::tags$td(as.character(cell))
+                  lapply(names(combined_result), function(col) {
+                    htmltools::tags$th(col)
                   })
                 )
-              })
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(combined_result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(combined_result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
             )
           )
-        )
-        htmltools::html_print(html_content)
-      } else {
-        View(combined_result)
+          htmltools::html_print(html_content)
+        } else {
+          View(combined_result)
+        }
       }
     }
     
@@ -144,7 +155,7 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
 #'                                       disag = "region")
 #' print(median_age_by_region)
 #' @export
-analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE) {
+analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -189,37 +200,48 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
     # Sort results from largest to smallest based on Median column
     combined_result <- combined_result[order(combined_result$Median, decreasing = TRUE), ]
     
+    # Reshape to wide format if requested
+    if(wide_format && !is.null(disag) && disag != "all") {
+      combined_result <- reshape_to_wide(combined_result, "median", disag)
+    }
+    
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
-      if(requireNamespace("htmltools", quietly = TRUE)) {
-        # Create descriptive title
-        title <- create_analysis_title(ques, disag, "median", "stat")
-        
-        # Create HTML table directly to avoid knitr warnings
-        html_content <- htmltools::tags$div(
-          htmltools::tags$h3(title),
-          htmltools::tags$table(
-            htmltools::tags$thead(
-              htmltools::tags$tr(
-                lapply(names(combined_result), function(col) {
-                  htmltools::tags$th(col)
-                })
-              )
-            ),
-            htmltools::tags$tbody(
-              lapply(1:nrow(combined_result), function(i) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, disag, "median", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("median_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+        dt_table_obj <- create_dt_table(combined_result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
                 htmltools::tags$tr(
-                  lapply(combined_result[i, ], function(cell) {
-                    htmltools::tags$td(as.character(cell))
+                  lapply(names(combined_result), function(col) {
+                    htmltools::tags$th(col)
                   })
                 )
-              })
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(combined_result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(combined_result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
             )
           )
-        )
-        htmltools::html_print(html_content)
-      } else {
-        View(combined_result)
+          htmltools::html_print(html_content)
+        } else {
+          View(combined_result)
+        }
       }
     }
     
