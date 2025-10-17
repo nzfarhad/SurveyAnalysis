@@ -93,6 +93,9 @@ format_analysis_output <- function(result_df, aggregation_method, show_view = FA
   # Remove row names
   rownames(formatted_result) <- NULL
   
+  # Add percentage signs if this is percentage data
+  formatted_result <- add_percentage_signs(formatted_result, aggregation_method)
+  
   # Show as HTML table in Viewer pane if requested
   if(show_view) {
     if(requireNamespace("htmltools", quietly = TRUE)) {
@@ -233,6 +236,7 @@ reshape_to_wide <- function(result_df, aggregation_method, disag) {
         if(nrow(level_data) > 0) {
           wide_data[1, paste0(result_column, "_", level)] <- level_data[[result_column]][1]
           wide_data[1, paste0("Count_", level)] <- level_data$Count[1]
+          wide_data[1, paste0("Valid_", level)] <- level_data$Valid[1]
         }
       }
       
@@ -249,18 +253,13 @@ reshape_to_wide <- function(result_df, aggregation_method, disag) {
       names(wide_data) <- gsub(paste0("Count."), "Count_", names(wide_data))
       names(wide_data) <- gsub(paste0("Valid."), "Valid_", names(wide_data))
       
-      # Remove Valid columns from wide format
-      valid_cols <- names(wide_data)[grepl("^Valid_", names(wide_data))]
-      if(length(valid_cols) > 0) {
-        wide_data <- wide_data[, !names(wide_data) %in% valid_cols]
-      }
-      
-      # Reorder columns: Response, then result columns, then count columns
+      # Reorder columns: Response, then result columns, then count columns, then valid columns
       response_col <- "Response"
       result_cols <- names(wide_data)[grepl(paste0("^", result_column, "_"), names(wide_data))]
       count_cols <- names(wide_data)[grepl("^Count_", names(wide_data))]
+      valid_cols <- names(wide_data)[grepl("^Valid_", names(wide_data))]
       
-      # Create ordered column names: Response, then alternating result/count for each level
+      # Create ordered column names: Response, then alternating result/count/valid for each level
       ordered_cols <- c(response_col)
       disag_levels <- unique(result_df[[disag]])
       
@@ -271,9 +270,12 @@ reshape_to_wide <- function(result_df, aggregation_method, disag) {
         if(paste0("Count_", level) %in% names(wide_data)) {
           ordered_cols <- c(ordered_cols, paste0("Count_", level))
         }
+        if(paste0("Valid_", level) %in% names(wide_data)) {
+          ordered_cols <- c(ordered_cols, paste0("Valid_", level))
+        }
       }
       
-      # Reorder the data frame
+      # Reorder the data frame - only keep the ordered columns
       wide_data <- wide_data[, ordered_cols[ordered_cols %in% names(wide_data)]]
       
       # Sort by the first result column (descending)
@@ -293,6 +295,9 @@ reshape_to_wide <- function(result_df, aggregation_method, disag) {
   # Remove row names
   rownames(wide_data) <- NULL
   
+  # Add percentage signs if this is percentage data
+  wide_data <- add_percentage_signs(wide_data, aggregation_method)
+  
   return(wide_data)
 }
 
@@ -307,38 +312,227 @@ reshape_to_wide <- function(result_df, aggregation_method, disag) {
 create_dt_table <- function(data, title, filename = "analysis_results") {
   
   if(requireNamespace("DT", quietly = TRUE)) {
-    # Create DT table with search and download options
-    dt_table <- DT::datatable(
-      data,
-      caption = title,
-      extensions = c('Buttons'),
-      options = list(
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = 'excel', filename = filename),
-          list(extend = 'csv', filename = filename),
-          list(extend = 'pdf', filename = filename),
-          'copy', 'print'
-        ),
-        pageLength = 25,
-        lengthMenu = c(10, 25, 50, 100),
-        searchHighlight = TRUE,
-        language = list(
-          search = "Search:",
-          lengthMenu = "Show _MENU_ entries",
-          info = "Showing _START_ to _END_ of _TOTAL_ entries",
-          paginate = list(
-            first = "First",
-            last = "Last", 
-            `next` = "Next",
-            previous = "Previous"
+    # Check if this is wide format data (has columns with _ in them)
+    is_wide_format <- any(grepl("_", names(data)))
+    
+    if(is_wide_format) {
+      # Create a proper wide format table with merged headers
+      # First, let's create a custom HTML table structure
+      
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Extract column information
+        col_names <- names(data)
+        
+        # Find disaggregation levels
+        disag_cols <- col_names[grepl("_", col_names)]
+        disag_levels <- unique(gsub(".*_(.*)$", "\\1", disag_cols))
+        
+        # Determine if this is a statistical function (no Response column)
+        is_stat_function <- !any(grepl("^Response$", col_names))
+        
+        # Extract aggregation method from column names for statistical functions
+        if(is_stat_function) {
+          # Find the aggregation method from the first column name
+          first_col <- col_names[1]
+          if(grepl("^Mean_", first_col)) {
+            agg_method <- "Mean"
+          } else if(grepl("^Median_", first_col)) {
+            agg_method <- "Median"
+          } else if(grepl("^Sum_", first_col)) {
+            agg_method <- "Sum"
+          } else if(grepl("^FirstQuartile_", first_col)) {
+            agg_method <- "First Quartile"
+          } else if(grepl("^ThirdQuartile_", first_col)) {
+            agg_method <- "Third Quartile"
+          } else if(grepl("^Min_", first_col)) {
+            agg_method <- "Min"
+          } else if(grepl("^Max_", first_col)) {
+            agg_method <- "Max"
+          } else {
+            agg_method <- "Value"
+          }
+        }
+        
+        if(is_stat_function) {
+          # For statistical functions, create a single row table
+          header_row1 <- htmltools::tags$tr(
+            lapply(disag_levels, function(level) {
+              htmltools::tags$th(level, colspan = 3, style = "text-align: center; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;")
+            })
+          )
+          
+          header_row2 <- htmltools::tags$tr(
+            lapply(disag_levels, function(level) {
+              list(
+                htmltools::tags$th(agg_method, style = "text-align: center; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;"),
+                htmltools::tags$th("Count", style = "text-align: center; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;"),
+                htmltools::tags$th("Valid", style = "text-align: center; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;")
+              )
+            })
+          )
+          
+          # Create single data row for statistical functions
+          data_rows <- list(
+            htmltools::tags$tr(
+              lapply(disag_levels, function(level) {
+                # Find the correct column name for this aggregation method
+                agg_col <- paste0(agg_method, "_", level)
+                if(agg_method == "First Quartile") {
+                  agg_col <- paste0("FirstQuartile_", level)
+                } else if(agg_method == "Third Quartile") {
+                  agg_col <- paste0("ThirdQuartile_", level)
+                }
+                
+                count_col <- paste0("Count_", level)
+                valid_col <- paste0("Valid_", level)
+                
+                list(
+                  htmltools::tags$td(if(agg_col %in% names(data)) data[1, agg_col] else "", 
+                                   style = "text-align: center; border: 1px solid #dee2e6; padding: 8px;"),
+                  htmltools::tags$td(if(count_col %in% names(data)) data[1, count_col] else "", 
+                                   style = "text-align: center; border: 1px solid #dee2e6; padding: 8px;"),
+                  htmltools::tags$td(if(valid_col %in% names(data)) data[1, valid_col] else "", 
+                                   style = "text-align: center; border: 1px solid #dee2e6; padding: 8px;")
+                )
+              })
+            )
+          )
+          
+        } else {
+          # For percentage-based functions (single/multi select)
+          response_col <- col_names[1]
+          
+          header_row1 <- htmltools::tags$tr(
+            htmltools::tags$th(response_col, rowspan = 2, style = "text-align: left; vertical-align: middle; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;"),
+            lapply(disag_levels, function(level) {
+              htmltools::tags$th(level, colspan = 3, style = "text-align: center; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;")
+            })
+          )
+          
+          header_row2 <- htmltools::tags$tr(
+            lapply(disag_levels, function(level) {
+              list(
+                htmltools::tags$th("Percentage", style = "text-align: center; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;"),
+                htmltools::tags$th("Count", style = "text-align: center; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;"),
+                htmltools::tags$th("Valid", style = "text-align: center; background-color: #f8f9fa; border: 1px solid #dee2e6; font-weight: bold; padding: 8px;")
+              )
+            })
+          )
+          
+          # Create data rows for percentage-based functions
+          data_rows <- lapply(1:nrow(data), function(i) {
+            htmltools::tags$tr(
+              htmltools::tags$td(data[i, 1], style = "text-align: left; border: 1px solid #dee2e6; padding: 8px;"),
+              lapply(disag_levels, function(level) {
+                perc_col <- paste0("Percentage_", level)
+                count_col <- paste0("Count_", level)
+                valid_col <- paste0("Valid_", level)
+                
+                list(
+                  htmltools::tags$td(if(perc_col %in% names(data)) data[i, perc_col] else "", 
+                                   style = "text-align: center; border: 1px solid #dee2e6; padding: 8px;"),
+                  htmltools::tags$td(if(count_col %in% names(data)) data[i, count_col] else "", 
+                                   style = "text-align: center; border: 1px solid #dee2e6; padding: 8px;"),
+                  htmltools::tags$td(if(valid_col %in% names(data)) data[i, valid_col] else "", 
+                                   style = "text-align: center; border: 1px solid #dee2e6; padding: 8px;")
+                )
+              })
+            )
+          })
+        }
+        
+        # Create the complete table
+        html_table <- htmltools::tags$div(
+          htmltools::tags$h3(title, style = "margin-bottom: 20px;"),
+          htmltools::tags$table(
+            style = "border-collapse: collapse; width: 100%; margin-bottom: 20px;",
+            htmltools::tags$thead(
+              header_row1,
+              header_row2
+            ),
+            htmltools::tags$tbody(data_rows)
           )
         )
-      ),
-      class = 'display nowrap compact',
-      rownames = FALSE,
-      filter = 'top'
-    )
+        
+        # Display the HTML table
+        htmltools::html_print(html_table)
+        return(NULL)
+        
+      } else {
+        # Fallback to regular DT table
+        dt_table <- DT::datatable(
+          data,
+          caption = title,
+          extensions = c('Buttons'),
+          options = list(
+            dom = 'Bfrtip',
+            buttons = list(
+              list(extend = 'excel', filename = filename),
+              list(extend = 'csv', filename = filename),
+              list(extend = 'pdf', filename = filename),
+              'copy', 'print'
+            ),
+            pageLength = 25,
+            lengthMenu = c(10, 25, 50, 100),
+            searchHighlight = TRUE,
+            language = list(
+              search = "Search:",
+              lengthMenu = "Show _MENU_ entries",
+              info = "Showing _START_ to _END_ of _TOTAL_ entries",
+              paginate = list(
+                first = "First",
+                last = "Last", 
+                `next` = "Next",
+                previous = "Previous"
+              )
+            ),
+            columnDefs = list(
+              list(className = 'dt-center', targets = '_all'),
+              list(className = 'dt-left', targets = 0)
+            )
+          ),
+          class = 'display nowrap compact',
+          rownames = FALSE,
+          filter = 'top'
+        )
+        print(dt_table)
+        return(dt_table)
+      }
+      
+    } else {
+      # Regular DT table for long format
+      dt_table <- DT::datatable(
+        data,
+        caption = title,
+        extensions = c('Buttons'),
+        options = list(
+          dom = 'Bfrtip',
+          buttons = list(
+            list(extend = 'excel', filename = filename),
+            list(extend = 'csv', filename = filename),
+            list(extend = 'pdf', filename = filename),
+            'copy', 'print'
+          ),
+          pageLength = 25,
+          lengthMenu = c(10, 25, 50, 100),
+          searchHighlight = TRUE,
+          language = list(
+            search = "Search:",
+            lengthMenu = "Show _MENU_ entries",
+            info = "Showing _START_ to _END_ of _TOTAL_ entries",
+            paginate = list(
+              first = "First",
+              last = "Last", 
+              `next` = "Next",
+              previous = "Previous"
+            )
+          )
+        ),
+        class = 'display nowrap compact',
+        rownames = FALSE,
+        filter = 'top'
+      )
+    }
     
     # Display the table in Viewer pane
     print(dt_table)
@@ -375,5 +569,82 @@ create_dt_table <- function(data, title, filename = "analysis_results") {
     return(NULL)
   }
 }
+
+#' Create Wide Format Header for DT Table
+#'
+#' Helper function to create merged headers for wide format DT tables.
+#' 
+#' @param data Data frame in wide format
+#' @return HTML table container with merged headers
+create_wide_format_header <- function(data) {
+  
+  if(requireNamespace("htmltools", quietly = TRUE)) {
+    # Extract column names
+    col_names <- names(data)
+    
+    # Find Response column (first column)
+    response_col <- col_names[1]
+    
+    # Find disaggregation levels by looking for columns with _
+    disag_cols <- col_names[grepl("_", col_names)]
+    
+    # Extract unique disaggregation levels
+    disag_levels <- unique(gsub(".*_(.*)$", "\\1", disag_cols))
+    
+    # Create header rows
+    header_row1 <- htmltools::tags$tr(
+      htmltools::tags$th(response_col, rowspan = 2, style = "text-align: center; vertical-align: middle;"),
+      lapply(disag_levels, function(level) {
+        htmltools::tags$th(level, colspan = 2, style = "text-align: center;")
+      })
+    )
+    
+    header_row2 <- htmltools::tags$tr(
+      lapply(disag_levels, function(level) {
+        list(
+          htmltools::tags$th("Percentage", style = "text-align: center;"),
+          htmltools::tags$th("Count", style = "text-align: center;")
+        )
+      })
+    )
+    
+    # Create table container
+    container <- htmltools::tags$table(
+      htmltools::tags$thead(
+        header_row1,
+        header_row2
+      ),
+      htmltools::tags$tbody()
+    )
+    
+    return(container)
+  } else {
+    return(NULL)
+  }
+}
+
+#' Add Percentage Signs to Data
+#'
+#' Helper function to add "%" signs to percentage columns.
+#' 
+#' @param data Data frame
+#' @param aggregation_method Character string indicating the aggregation method
+#' @return Data frame with percentage signs added
+add_percentage_signs <- function(data, aggregation_method) {
+  
+  if(aggregation_method == "perc") {
+    # Find percentage columns
+    perc_cols <- names(data)[grepl("Percentage", names(data))]
+    
+    for(col in perc_cols) {
+      if(is.numeric(data[[col]])) {
+        data[[col]] <- paste0(data[[col]], "%")
+      }
+    }
+  }
+  
+  return(data)
+}
+
 
 
