@@ -34,7 +34,7 @@
 #' print(services_by_region)
 #'
 #' @export
-analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_response_sep = "; ", show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, chart_type = "column") {
+analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_response_sep = "; ", show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, chart_type = "column", max_label_length = 12) {
   
   # Set global separator
   multi_response_sep <<- multi_response_sep
@@ -48,7 +48,7 @@ analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_res
       plot_title <- create_analysis_title(ques, "all", "perc", "multi_select")
       plot_obj <- create_visualization(result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
-                                     chart_type = chart_type)
+                                     chart_type = chart_type, max_label_length = max_label_length)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -146,7 +146,7 @@ analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_res
       plot_title <- create_analysis_title(ques, disag, "perc", "multi_select")
       plot_obj <- create_visualization(combined_result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
-                                     chart_type = chart_type)
+                                     chart_type = chart_type, max_label_length = max_label_length)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))

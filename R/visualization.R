@@ -12,6 +12,8 @@
 #' @param original_data Optional original survey data for box plots (mean/median only)
 #' @param ques Optional question column name for box plots
 #' @param disag Optional disaggregation variable name for box plots
+#' @param chart_type Chart type ("auto", "column", "bar", "pie") (default: "auto")
+#' @param max_label_length Maximum length for truncated labels (default: 12)
 #'
 #' @return A ggplot2 object or NULL if no visualization is appropriate
 #'
@@ -32,7 +34,7 @@
 #' @export
 create_visualization <- function(data, analysis_type, title, max_categories = 10, 
                                 color_primary = "#730202", color_secondary = "#f27304",
-                                original_data = NULL, ques = NULL, disag = NULL, chart_type = "auto") {
+                                original_data = NULL, ques = NULL, disag = NULL, chart_type = "auto", max_label_length = 12) {
   
   # Check if ggplot2 is available
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -55,7 +57,7 @@ create_visualization <- function(data, analysis_type, title, max_categories = 10
   # Handle different analysis types
   if (analysis_type %in% c("perc", "proportion", "percentage")) {
     return(create_percentage_visualization(data, title, max_categories, 
-                                         color_primary, color_secondary, is_disaggregated, chart_type))
+                                         color_primary, color_secondary, is_disaggregated, chart_type, max_label_length))
   } else if (analysis_type %in% c("mean", "median")) {
     # For mean and median, try to create box plots if original data is available
     if (!is.null(original_data) && !is.null(ques)) {
@@ -90,7 +92,7 @@ create_visualization <- function(data, analysis_type, title, max_categories = 10
 #'
 #' @export
 create_percentage_visualization <- function(data, title, max_categories, 
-                                          color_primary, color_secondary, is_disaggregated, chart_type = "auto") {
+                                          color_primary, color_secondary, is_disaggregated, chart_type = "auto", max_label_length = 12) {
   
   # Check if we have percentage data
   perc_cols <- names(data)[grepl("Percentage|perc", names(data), ignore.case = TRUE)]
@@ -101,10 +103,10 @@ create_percentage_visualization <- function(data, title, max_categories,
   
   if (is_disaggregated) {
     return(create_disaggregated_percentage_chart(data, title, max_categories, 
-                                               color_primary, color_secondary, chart_type))
+                                               color_primary, color_secondary, chart_type, max_label_length))
   } else {
     return(create_simple_percentage_chart(data, title, max_categories, 
-                                        color_primary, color_secondary, chart_type))
+                                        color_primary, color_secondary, chart_type, max_label_length))
   }
 }
 
@@ -120,7 +122,7 @@ create_percentage_visualization <- function(data, title, max_categories,
 #'
 #' @export
 create_simple_percentage_chart <- function(data, title, max_categories, 
-                                         color_primary, color_secondary, chart_type = "auto") {
+                                         color_primary, color_secondary, chart_type = "auto", max_label_length = 12) {
   
   # Find the percentage column
   perc_col <- names(data)[grepl("Percentage|perc", names(data), ignore.case = TRUE)][1]
@@ -129,12 +131,6 @@ create_simple_percentage_chart <- function(data, title, max_categories,
   if (is.null(perc_col) || is.null(response_col)) {
     warning("Required columns not found for percentage visualization")
     return(NULL)
-  }
-  
-  # Limit categories if too many
-  if (nrow(data) > max_categories) {
-    data <- data[1:max_categories, ]
-    title <- paste0(title, " (Top ", max_categories, " Categories)")
   }
   
   # Remove percentage signs for numeric operations
@@ -146,12 +142,26 @@ create_simple_percentage_chart <- function(data, title, max_categories,
   # Sort data by percentage (largest to smallest) for better visualization
   data_for_plot <- data_for_plot[order(data_for_plot[[perc_col]], decreasing = TRUE), ]
   
-  # Create color palette
-  n_categories <- nrow(data)
-  colors <- create_color_palette(n_categories, color_primary, color_secondary)
+  # Limit categories if too many (AFTER sorting to get top categories by percentage)
+  if (nrow(data_for_plot) > max_categories) {
+    data_for_plot <- data_for_plot[1:max_categories, ]
+    title <- paste0(title, " (Top ", max_categories, " Categories)")
+  }
   
-  # Truncate long labels more aggressively for better spacing
-  data_for_plot[[response_col]] <- truncate_labels(data_for_plot[[response_col]], 12)
+  # Truncate long labels more aggressively for better spacing (BEFORE factor ordering)
+  data_for_plot[[response_col]] <- truncate_labels(data_for_plot[[response_col]], max_label_length)
+  
+  # Fix factor ordering - explicitly set factor levels to maintain sort order
+  # Ensure unique levels to avoid duplicates after truncation
+  unique_levels <- unique(data_for_plot[[response_col]])
+  data_for_plot[[response_col]] <- factor(
+    data_for_plot[[response_col]],
+    levels = unique_levels
+  )
+  
+  # Create color palette
+  n_categories <- nrow(data_for_plot)
+  colors <- create_color_palette(n_categories, color_primary, color_secondary)
   
   # Determine chart type based on user preference or automatic selection
   if (chart_type == "pie" || (chart_type == "auto" && n_categories < 5)) {
@@ -238,17 +248,17 @@ create_simple_percentage_chart <- function(data, title, max_categories,
 #'
 #' @export
 create_disaggregated_percentage_chart <- function(data, title, max_categories, 
-                                                color_primary, color_secondary, chart_type = "auto") {
+                                                color_primary, color_secondary, chart_type = "auto", max_label_length = 12) {
   
   # Check if this is wide format data
   is_wide_format <- any(grepl("_", names(data)))
   
   if (is_wide_format) {
     return(create_wide_format_percentage_chart(data, title, max_categories, 
-                                             color_primary, color_secondary, chart_type))
+                                             color_primary, color_secondary, chart_type, max_label_length))
   } else {
     return(create_long_format_percentage_chart(data, title, max_categories, 
-                                             color_primary, color_secondary, chart_type))
+                                             color_primary, color_secondary, chart_type, max_label_length))
   }
 }
 
@@ -264,7 +274,7 @@ create_disaggregated_percentage_chart <- function(data, title, max_categories,
 #'
 #' @export
 create_wide_format_percentage_chart <- function(data, title, max_categories, 
-                                              color_primary, color_secondary, chart_type = "auto") {
+                                              color_primary, color_secondary, chart_type = "auto", max_label_length = 12) {
   
   # Extract percentage columns
   perc_cols <- names(data)[grepl("Percentage_", names(data))]
@@ -273,12 +283,6 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
   if (length(perc_cols) == 0 || is.null(response_col)) {
     warning("Required columns not found for wide format percentage visualization")
     return(NULL)
-  }
-  
-  # Limit categories if too many
-  if (nrow(data) > max_categories) {
-    data <- data[1:max_categories, ]
-    title <- paste0(title, " (Top ", max_categories, " Categories)")
   }
   
   # Remove percentage signs for numeric operations
@@ -303,6 +307,22 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
   plot_data$max_percentage <- ave(plot_data$Percentage, plot_data$Response, FUN = max)
   plot_data <- plot_data[order(plot_data$max_percentage, decreasing = TRUE), ]
   plot_data$max_percentage <- NULL  # Remove temporary column
+  
+  # Limit categories if too many (AFTER sorting to get top categories by percentage)
+  unique_responses <- unique(plot_data$Response)
+  if (length(unique_responses) > max_categories) {
+    top_responses <- unique_responses[1:max_categories]
+    plot_data <- plot_data[plot_data$Response %in% top_responses, ]
+    title <- paste0(title, " (Top ", max_categories, " Categories)")
+  }
+  
+  # Fix factor ordering - explicitly set factor levels to maintain sort order
+  # Ensure unique levels to avoid duplicates after truncation
+  unique_levels <- unique(plot_data$Response)
+  plot_data$Response <- factor(
+    plot_data$Response,
+    levels = unique_levels
+  )
   
   # Create color palette
   n_levels <- length(unique(plot_data$Level))
@@ -386,7 +406,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
 #'
 #' @export
 create_long_format_percentage_chart <- function(data, title, max_categories, 
-                                              color_primary, color_secondary, chart_type = "auto") {
+                                              color_primary, color_secondary, chart_type = "auto", max_label_length = 12) {
   
   # Find relevant columns
   perc_col <- names(data)[grepl("Percentage|perc", names(data), ignore.case = TRUE)][1]
@@ -396,12 +416,6 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
   if (is.null(perc_col) || is.null(response_col) || is.null(level_col)) {
     warning("Required columns not found for long format percentage visualization")
     return(NULL)
-  }
-  
-  # Limit categories if too many
-  if (nrow(data) > max_categories) {
-    data <- data[1:max_categories, ]
-    title <- paste0(title, " (Top ", max_categories, " Categories)")
   }
   
   # Remove percentage signs for numeric operations
@@ -416,9 +430,25 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
   data_for_plot <- data_for_plot[order(data_for_plot$max_percentage, decreasing = TRUE), ]
   data_for_plot$max_percentage <- NULL  # Remove temporary column
   
+  # Limit categories if too many (AFTER sorting to get top categories by percentage)
+  unique_responses <- unique(data_for_plot[[response_col]])
+  if (length(unique_responses) > max_categories) {
+    top_responses <- unique_responses[1:max_categories]
+    data_for_plot <- data_for_plot[data_for_plot[[response_col]] %in% top_responses, ]
+    title <- paste0(title, " (Top ", max_categories, " Categories)")
+  }
+  
+  # Fix factor ordering - explicitly set factor levels to maintain sort order
+  # Ensure unique levels to avoid duplicates after truncation
+  unique_levels <- unique(data_for_plot[[response_col]])
+  data_for_plot[[response_col]] <- factor(
+    data_for_plot[[response_col]],
+    levels = unique_levels
+  )
+  
   # Create color palette
-  n_levels <- length(unique(data[[level_col]]))
-  n_responses <- length(unique(data[[response_col]]))
+  n_levels <- length(unique(data_for_plot[[level_col]]))
+  n_responses <- length(unique(data_for_plot[[response_col]]))
   
   # Determine chart type based on user preference or automatic selection
   if (chart_type == "pie" || (chart_type == "auto" && n_responses < 5)) {
