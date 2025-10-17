@@ -286,7 +286,7 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
 #'                             disag = "region")
 #' print(sum_by_region)
 #' @export
-analyze_sum <- function(df, ques, disag = NULL, level = NULL) {
+analyze_sum <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -324,18 +324,86 @@ analyze_sum <- function(df, ques, disag = NULL, level = NULL) {
   
   # Combine results
   if(length(results_list) > 0) {
-    return(do.call(rbind, results_list))
+    combined_result <- do.call(rbind, results_list)
+    # Remove row names
+    rownames(combined_result) <- NULL
+    
+    # Sort results from largest to smallest based on Sum column
+    combined_result <- combined_result[order(combined_result$Sum, decreasing = TRUE), ]
+    
+    # Reshape to wide format if requested
+    if(wide_format && !is.null(disag) && disag != "all") {
+      combined_result <- reshape_to_wide(combined_result, "sum", disag)
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, disag, "sum", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("sum_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+        dt_table_obj <- create_dt_table(combined_result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(combined_result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(combined_result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(combined_result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          View(combined_result)
+        }
+      }
+    }
+    
+    return(combined_result)
   } else {
     # Return empty result if no valid observations
     empty_result <- data.frame(
       Response = character(0),
-      Disaggregation = character(0),
-      DisaggLevel = character(0),
       Sum = numeric(0),
       Count = integer(0),
       Valid = integer(0),
       stringsAsFactors = FALSE
     )
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "sum", "stat")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$p("No data available")
+        )
+        htmltools::html_print(html_content)
+      } else {
+        View(empty_result)
+      }
+    }
+    
     return(empty_result)
   }
 }
@@ -349,7 +417,7 @@ analyze_sum <- function(df, ques, disag = NULL, level = NULL) {
 #'                                        disag = "region")
 #' print(q1_by_region)
 #' @export
-analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL) {
+analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -387,18 +455,86 @@ analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL) {
   
   # Combine results
   if(length(results_list) > 0) {
-    return(do.call(rbind, results_list))
+    combined_result <- do.call(rbind, results_list)
+    # Remove row names
+    rownames(combined_result) <- NULL
+    
+    # Sort results from largest to smallest based on FirstQuartile column
+    combined_result <- combined_result[order(combined_result$FirstQuartile, decreasing = TRUE), ]
+    
+    # Reshape to wide format if requested
+    if(wide_format && !is.null(disag) && disag != "all") {
+      combined_result <- reshape_to_wide(combined_result, "1stq", disag)
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, disag, "1stq", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("first_quartile_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+        dt_table_obj <- create_dt_table(combined_result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(combined_result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(combined_result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(combined_result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          View(combined_result)
+        }
+      }
+    }
+    
+    return(combined_result)
   } else {
     # Return empty result if no valid observations
     empty_result <- data.frame(
       Response = character(0),
-      Disaggregation = character(0),
-      DisaggLevel = character(0),
       FirstQuartile = numeric(0),
       Count = integer(0),
       Valid = integer(0),
       stringsAsFactors = FALSE
     )
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "1stq", "stat")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$p("No data available")
+        )
+        htmltools::html_print(html_content)
+      } else {
+        View(empty_result)
+      }
+    }
+    
     return(empty_result)
   }
 }
@@ -411,7 +547,7 @@ analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL) {
 #'                                        disag = "region")
 #' print(q3_by_region)
 #' @export
-analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL) {
+analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -449,18 +585,86 @@ analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL) {
   
   # Combine results
   if(length(results_list) > 0) {
-    return(do.call(rbind, results_list))
+    combined_result <- do.call(rbind, results_list)
+    # Remove row names
+    rownames(combined_result) <- NULL
+    
+    # Sort results from largest to smallest based on ThirdQuartile column
+    combined_result <- combined_result[order(combined_result$ThirdQuartile, decreasing = TRUE), ]
+    
+    # Reshape to wide format if requested
+    if(wide_format && !is.null(disag) && disag != "all") {
+      combined_result <- reshape_to_wide(combined_result, "3rdq", disag)
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, disag, "3rdq", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("third_quartile_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+        dt_table_obj <- create_dt_table(combined_result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(combined_result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(combined_result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(combined_result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          View(combined_result)
+        }
+      }
+    }
+    
+    return(combined_result)
   } else {
     # Return empty result if no valid observations
     empty_result <- data.frame(
       Response = character(0),
-      Disaggregation = character(0),
-      DisaggLevel = character(0),
       ThirdQuartile = numeric(0),
       Count = integer(0),
       Valid = integer(0),
       stringsAsFactors = FALSE
     )
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "3rdq", "stat")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$p("No data available")
+        )
+        htmltools::html_print(html_content)
+      } else {
+        View(empty_result)
+      }
+    }
+    
     return(empty_result)
   }
 }
@@ -474,7 +678,7 @@ analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL) {
 #'                             disag = "region")
 #' print(min_by_region)
 #' @export
-analyze_min <- function(df, ques, disag = NULL, level = NULL) {
+analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -512,18 +716,86 @@ analyze_min <- function(df, ques, disag = NULL, level = NULL) {
   
   # Combine results
   if(length(results_list) > 0) {
-    return(do.call(rbind, results_list))
+    combined_result <- do.call(rbind, results_list)
+    # Remove row names
+    rownames(combined_result) <- NULL
+    
+    # Sort results from largest to smallest based on Min column
+    combined_result <- combined_result[order(combined_result$Min, decreasing = TRUE), ]
+    
+    # Reshape to wide format if requested
+    if(wide_format && !is.null(disag) && disag != "all") {
+      combined_result <- reshape_to_wide(combined_result, "min", disag)
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, disag, "min", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("min_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+        dt_table_obj <- create_dt_table(combined_result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(combined_result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(combined_result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(combined_result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          View(combined_result)
+        }
+      }
+    }
+    
+    return(combined_result)
   } else {
     # Return empty result if no valid observations
     empty_result <- data.frame(
       Response = character(0),
-      Disaggregation = character(0),
-      DisaggLevel = character(0),
       Min = numeric(0),
       Count = integer(0),
       Valid = integer(0),
       stringsAsFactors = FALSE
     )
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "min", "stat")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$p("No data available")
+        )
+        htmltools::html_print(html_content)
+      } else {
+        View(empty_result)
+      }
+    }
+    
     return(empty_result)
   }
 }
@@ -536,7 +808,7 @@ analyze_min <- function(df, ques, disag = NULL, level = NULL) {
 #'                             disag = "region")
 #' print(max_by_region)
 #' @export
-analyze_max <- function(df, ques, disag = NULL, level = NULL) {
+analyze_max <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -574,18 +846,86 @@ analyze_max <- function(df, ques, disag = NULL, level = NULL) {
   
   # Combine results
   if(length(results_list) > 0) {
-    return(do.call(rbind, results_list))
+    combined_result <- do.call(rbind, results_list)
+    # Remove row names
+    rownames(combined_result) <- NULL
+    
+    # Sort results from largest to smallest based on Max column
+    combined_result <- combined_result[order(combined_result$Max, decreasing = TRUE), ]
+    
+    # Reshape to wide format if requested
+    if(wide_format && !is.null(disag) && disag != "all") {
+      combined_result <- reshape_to_wide(combined_result, "max", disag)
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, disag, "max", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("max_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+        dt_table_obj <- create_dt_table(combined_result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(combined_result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(combined_result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(combined_result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          View(combined_result)
+        }
+      }
+    }
+    
+    return(combined_result)
   } else {
     # Return empty result if no valid observations
     empty_result <- data.frame(
       Response = character(0),
-      Disaggregation = character(0),
-      DisaggLevel = character(0),
       Max = numeric(0),
       Count = integer(0),
       Valid = integer(0),
       stringsAsFactors = FALSE
     )
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "max", "stat")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$p("No data available")
+        )
+        htmltools::html_print(html_content)
+      } else {
+        View(empty_result)
+      }
+    }
+    
     return(empty_result)
   }
 }
