@@ -43,6 +43,54 @@ analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_res
   if(is.null(disag)) {
     result <- multi_select(df, ques, "all", "all", show_view)
     
+    # Sort results from largest to smallest based on Percentage column
+    result <- result[order(result$Percentage, decreasing = TRUE), ]
+    
+    # Reshape to wide format if requested (though not applicable for non-disaggregated)
+    if(wide_format) {
+      warning("Wide format not applicable for non-disaggregated analysis")
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, "all", "perc", "multi_select")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("multi_select_", ques)
+        dt_table_obj <- create_dt_table(result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          warning("htmltools package required for HTML table display")
+        }
+      }
+    }
+    
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "perc", "multi_select")

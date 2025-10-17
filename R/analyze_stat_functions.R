@@ -34,6 +34,51 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
   if(is.null(disag)) {
     result <- stat_mean(df, ques, "all", "all", show_view)
     
+    # Reshape to wide format if requested (though not applicable for non-disaggregated)
+    if(wide_format) {
+      warning("Wide format not applicable for non-disaggregated analysis")
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, "all", "mean", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("mean_", ques)
+        dt_table_obj <- create_dt_table(result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          warning("htmltools package required for HTML table display")
+        }
+      }
+    }
+    
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "mean", "stat")
@@ -184,6 +229,51 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
     result <- stat_median(df, ques, "all", "all")
+    
+    # Reshape to wide format if requested (though not applicable for non-disaggregated)
+    if(wide_format) {
+      warning("Wide format not applicable for non-disaggregated analysis")
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, "all", "median", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("median_", ques)
+        dt_table_obj <- create_dt_table(result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          warning("htmltools package required for HTML table display")
+        }
+      }
+    }
     
     # Create visualization if requested
     if(create_plot) {
@@ -338,7 +428,64 @@ analyze_sum <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
-    return(stat_sum(df, ques, "all", "all"))
+    result <- stat_sum(df, ques, "all", "all")
+    
+    # Reshape to wide format if requested (though not applicable for non-disaggregated)
+    if(wide_format) {
+      warning("Wide format not applicable for non-disaggregated analysis")
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, "all", "sum", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("sum_", ques)
+        dt_table_obj <- create_dt_table(result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          warning("htmltools package required for HTML table display")
+        }
+      }
+    }
+    
+    # Create visualization if requested
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, "all", "sum", "stat")
+      plot_obj <- create_visualization(result, "sum", plot_title, max_categories, max_label_length = max_label_length)
+      if(!is.null(plot_obj)) {
+        print(plot_obj)
+        return(list(table = result, plot = plot_obj))
+      }
+    }
+    
+    return(result)
   }
   
   # Check if disaggregation variable exists in data
@@ -479,7 +626,64 @@ analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
-    return(stat_1stq(df, ques, "all", "all"))
+    result <- stat_1stq(df, ques, "all", "all")
+    
+    # Reshape to wide format if requested (though not applicable for non-disaggregated)
+    if(wide_format) {
+      warning("Wide format not applicable for non-disaggregated analysis")
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, "all", "1stq", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("first_quartile_", ques)
+        dt_table_obj <- create_dt_table(result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          warning("htmltools package required for HTML table display")
+        }
+      }
+    }
+    
+    # Create visualization if requested
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, "all", "1stq", "stat")
+      plot_obj <- create_visualization(result, "1stq", plot_title, max_categories, max_label_length = max_label_length)
+      if(!is.null(plot_obj)) {
+        print(plot_obj)
+        return(list(table = result, plot = plot_obj))
+      }
+    }
+    
+    return(result)
   }
   
   # Check if disaggregation variable exists in data
@@ -619,7 +823,64 @@ analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
-    return(stat_3rdq(df, ques, "all", "all"))
+    result <- stat_3rdq(df, ques, "all", "all")
+    
+    # Reshape to wide format if requested (though not applicable for non-disaggregated)
+    if(wide_format) {
+      warning("Wide format not applicable for non-disaggregated analysis")
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, "all", "3rdq", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("third_quartile_", ques)
+        dt_table_obj <- create_dt_table(result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          warning("htmltools package required for HTML table display")
+        }
+      }
+    }
+    
+    # Create visualization if requested
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, "all", "3rdq", "stat")
+      plot_obj <- create_visualization(result, "3rdq", plot_title, max_categories, max_label_length = max_label_length)
+      if(!is.null(plot_obj)) {
+        print(plot_obj)
+        return(list(table = result, plot = plot_obj))
+      }
+    }
+    
+    return(result)
   }
   
   # Check if disaggregation variable exists in data
@@ -760,7 +1021,64 @@ analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
-    return(stat_min(df, ques, "all", "all"))
+    result <- stat_min(df, ques, "all", "all")
+    
+    # Reshape to wide format if requested (though not applicable for non-disaggregated)
+    if(wide_format) {
+      warning("Wide format not applicable for non-disaggregated analysis")
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, "all", "min", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("min_", ques)
+        dt_table_obj <- create_dt_table(result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          warning("htmltools package required for HTML table display")
+        }
+      }
+    }
+    
+    # Create visualization if requested
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, "all", "min", "stat")
+      plot_obj <- create_visualization(result, "min", plot_title, max_categories, max_label_length = max_label_length)
+      if(!is.null(plot_obj)) {
+        print(plot_obj)
+        return(list(table = result, plot = plot_obj))
+      }
+    }
+    
+    return(result)
   }
   
   # Check if disaggregation variable exists in data
@@ -900,7 +1218,64 @@ analyze_max <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
-    return(stat_max(df, ques, "all", "all"))
+    result <- stat_max(df, ques, "all", "all")
+    
+    # Reshape to wide format if requested (though not applicable for non-disaggregated)
+    if(wide_format) {
+      warning("Wide format not applicable for non-disaggregated analysis")
+    }
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      # Create descriptive title
+      title <- create_analysis_title(ques, "all", "max", "stat")
+      
+      if(dt_table) {
+        # Create DT table with search and download options
+        filename <- paste0("max_", ques)
+        dt_table_obj <- create_dt_table(result, title, filename)
+      } else {
+        # Use basic HTML table
+        if(requireNamespace("htmltools", quietly = TRUE)) {
+          html_content <- htmltools::tags$div(
+            htmltools::tags$h3(title),
+            htmltools::tags$table(
+              htmltools::tags$thead(
+                htmltools::tags$tr(
+                  lapply(names(result), function(col) {
+                    htmltools::tags$th(col)
+                  })
+                )
+              ),
+              htmltools::tags$tbody(
+                lapply(1:nrow(result), function(i) {
+                  htmltools::tags$tr(
+                    lapply(result[i, ], function(cell) {
+                      htmltools::tags$td(as.character(cell))
+                    })
+                  )
+                })
+              )
+            )
+          )
+          htmltools::html_print(html_content)
+        } else {
+          warning("htmltools package required for HTML table display")
+        }
+      }
+    }
+    
+    # Create visualization if requested
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, "all", "max", "stat")
+      plot_obj <- create_visualization(result, "max", plot_title, max_categories, max_label_length = max_label_length)
+      if(!is.null(plot_obj)) {
+        print(plot_obj)
+        return(list(table = result, plot = plot_obj))
+      }
+    }
+    
+    return(result)
   }
   
   # Check if disaggregation variable exists in data
