@@ -208,7 +208,8 @@ create_simple_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_x_continuous(limits = c(0, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
+      ggplot2::scale_x_continuous(limits = c(0, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1)) +
+      ggplot2::scale_y_discrete(limits = rev)
   } else {
     # Create vertical column chart (default)
     p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = response_col, y = perc_col)) +
@@ -361,7 +362,8 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_x_continuous(limits = c(0, max(plot_data$Percentage, na.rm = TRUE) * 1.1))
+      ggplot2::scale_x_continuous(limits = c(0, max(plot_data$Percentage, na.rm = TRUE) * 1.1)) +
+      ggplot2::scale_y_discrete(limits = rev)
   } else {
     # Create vertical grouped column chart (default)
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Response, y = Percentage, fill = Level)) +
@@ -483,7 +485,8 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_x_continuous(limits = c(0, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
+      ggplot2::scale_x_continuous(limits = c(0, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1)) +
+      ggplot2::scale_y_discrete(limits = rev)
   } else {
     # Create vertical grouped column chart (default)
     p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = response_col, y = perc_col, fill = level_col)) +
@@ -917,13 +920,22 @@ create_long_format_statistical_chart <- function(data, analysis_type, title, max
 #'
 #' @export
 truncate_labels <- function(labels, max_length = 15) {
-  sapply(labels, function(label) {
+  result <- sapply(labels, function(label) {
     if (is.character(label) && nchar(label) > max_length) {
       paste0(substr(label, 1, max_length - 3), "...")
     } else {
       as.character(label)
     }
   })
+  
+  # Handle duplicates by adding numbers if needed
+  if (any(duplicated(result))) {
+    # Find duplicates and make them unique
+    unique_result <- make.unique(result, sep = "_")
+    return(unique_result)
+  }
+  
+  return(result)
 }
 
 #' Helper function to create color palette
