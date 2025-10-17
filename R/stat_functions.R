@@ -45,7 +45,7 @@ stat_mean <- function(df, ques, disag, level, show_view = FALSE){
   res$disagg_level <- level
   
   # Format output according to requirements
-  return(format_analysis_output(res, "mean", show_view))
+  return(format_analysis_output(res, "mean", show_view, ques, disag, "stat"))
 }
 
 # Median calculation
@@ -71,7 +71,7 @@ stat_median <- function(df, ques, disag, level, show_view = FALSE){
   res$disagg_level <- level
   
   # Format output according to requirements
-  return(format_analysis_output(res, "median", show_view))
+  return(format_analysis_output(res, "median", show_view, ques, disag, "stat"))
 }
 
 # Sum calculation
@@ -90,7 +90,7 @@ stat_sum <- function(df, ques, disag, level, show_view = FALSE){
   res$disagg_level <- level
   
   # Format output according to requirements
-  return(format_analysis_output(res, "sum", show_view))
+  return(format_analysis_output(res, "sum", show_view, ques, disag, "stat"))
 }
 
 # First quartile calculation
@@ -109,7 +109,7 @@ stat_1stq <- function(df, ques, disag, level, show_view = FALSE){
   res$disagg_level <- level
   
   # Format output according to requirements
-  return(format_analysis_output(res, "1stq", show_view))
+  return(format_analysis_output(res, "1stq", show_view, ques, disag, "stat"))
 }
 
 # Third quartile calculation
@@ -128,7 +128,7 @@ stat_3rdq <- function(df, ques, disag, level, show_view = FALSE){
   res$disagg_level <- level
   
   # Format output according to requirements
-  return(format_analysis_output(res, "3rdq", show_view))
+  return(format_analysis_output(res, "3rdq", show_view, ques, disag, "stat"))
 }
 
 # Minimum value calculation
@@ -147,7 +147,7 @@ stat_min <- function(df, ques, disag, level, show_view = FALSE){
   res$disagg_level <- level
   
   # Format output according to requirements
-  return(format_analysis_output(res, "min", show_view))
+  return(format_analysis_output(res, "min", show_view, ques, disag, "stat"))
 }
 
 # Maximum value calculation
@@ -166,5 +166,5 @@ stat_max <- function(df, ques, disag, level, show_view = FALSE){
   res$disagg_level <- level
   
   # Format output according to requirements
-  return(format_analysis_output(res, "max", show_view))
+  return(format_analysis_output(res, "max", show_view, ques, disag, "stat"))
 }

@@ -4,8 +4,12 @@
 #' 
 #' @param result_df Data frame with analysis results
 #' @param aggregation_method Character string indicating the aggregation method
+#' @param show_view Logical indicating whether to display results in Viewer pane
+#' @param ques Character string specifying the question/variable name
+#' @param disag Character string specifying the disaggregation variable name
+#' @param analysis_type Character string indicating the type of analysis (single_select, multi_select, stat)
 #' @return Formatted data frame with proper column names and structure
-format_analysis_output <- function(result_df, aggregation_method, show_view = FALSE) {
+format_analysis_output <- function(result_df, aggregation_method, show_view = FALSE, ques = NULL, disag = NULL, analysis_type = NULL) {
   
   if(nrow(result_df) == 0) {
     empty_df <- data.frame(
@@ -92,9 +96,12 @@ format_analysis_output <- function(result_df, aggregation_method, show_view = FA
   # Show as HTML table in Viewer pane if requested
   if(show_view) {
     if(requireNamespace("htmltools", quietly = TRUE)) {
+      # Create descriptive title based on analysis type and parameters
+      title <- create_analysis_title(ques, disag, aggregation_method, analysis_type)
+      
       # Create HTML table directly to avoid knitr warnings
       html_content <- htmltools::tags$div(
-        htmltools::tags$h3(paste("Analysis Results -", stringr::str_to_title(aggregation_method))),
+        htmltools::tags$h3(title),
         htmltools::tags$table(
           htmltools::tags$thead(
             htmltools::tags$tr(
@@ -121,6 +128,67 @@ format_analysis_output <- function(result_df, aggregation_method, show_view = FA
   }
   
   return(formatted_result)
+}
+
+#' Create Analysis Title
+#'
+#' Helper function to create descriptive titles for HTML table output.
+#' 
+#' @param ques Character string specifying the question/variable name
+#' @param disag Character string specifying the disaggregation variable name
+#' @param aggregation_method Character string indicating the aggregation method
+#' @param analysis_type Character string indicating the type of analysis
+#' @return Character string with descriptive title
+create_analysis_title <- function(ques, disag, aggregation_method, analysis_type) {
+  
+  # Start with the question/variable name
+  title_parts <- c()
+  
+  if(!is.null(ques)) {
+    title_parts <- c(title_parts, paste("Variable:", ques))
+  }
+  
+  # Add disaggregation information
+  if(!is.null(disag) && disag != "all") {
+    title_parts <- c(title_parts, paste("Disaggregated by:", disag))
+  }
+  
+  # Add analysis type and aggregation method
+  if(!is.null(analysis_type)) {
+    if(analysis_type == "single_select") {
+      title_parts <- c(title_parts, "Single Select Analysis - Percentages")
+    } else if(analysis_type == "multi_select") {
+      title_parts <- c(title_parts, "Multi Select Analysis - Percentages")
+    } else if(analysis_type == "stat") {
+      # For statistical functions, show the specific method
+      agg_title <- switch(aggregation_method,
+                         "mean" = "Mean",
+                         "median" = "Median", 
+                         "sum" = "Sum",
+                         "1stq" = "First Quartile",
+                         "3rdq" = "Third Quartile",
+                         "min" = "Minimum",
+                         "max" = "Maximum",
+                         stringr::str_to_title(aggregation_method))
+      title_parts <- c(title_parts, paste("Statistical Analysis -", agg_title))
+    }
+  } else {
+    # Fallback if analysis_type is not provided
+    agg_title <- switch(aggregation_method,
+                       "perc" = "Percentages",
+                       "mean" = "Mean",
+                       "median" = "Median", 
+                       "sum" = "Sum",
+                       "1stq" = "First Quartile",
+                       "3rdq" = "Third Quartile",
+                       "min" = "Minimum",
+                       "max" = "Maximum",
+                       stringr::str_to_title(aggregation_method))
+    title_parts <- c(title_parts, paste("Analysis -", agg_title))
+  }
+  
+  # Combine all parts
+  return(paste(title_parts, collapse = " | "))
 }
 
 

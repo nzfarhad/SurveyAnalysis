@@ -75,12 +75,33 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
     
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
-      if(requireNamespace("knitr", quietly = TRUE) && requireNamespace("htmltools", quietly = TRUE)) {
-        # Create HTML table and display in Viewer pane
-        html_table <- knitr::kable(combined_result, 
-                                  caption = "Mean Analysis Results", 
-                                  format = "html")
-        htmltools::html_print(htmltools::HTML(html_table))
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "mean", "stat")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$table(
+            htmltools::tags$thead(
+              htmltools::tags$tr(
+                lapply(names(combined_result), function(col) {
+                  htmltools::tags$th(col)
+                })
+              )
+            ),
+            htmltools::tags$tbody(
+              lapply(1:nrow(combined_result), function(i) {
+                htmltools::tags$tr(
+                  lapply(combined_result[i, ], function(cell) {
+                    htmltools::tags$td(as.character(cell))
+                  })
+                )
+              })
+            )
+          )
+        )
+        htmltools::html_print(html_content)
       } else {
         View(combined_result)
       }
@@ -123,7 +144,7 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
 #'                                       disag = "region")
 #' print(median_age_by_region)
 #' @export
-analyze_median <- function(df, ques, disag = NULL, level = NULL) {
+analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -161,18 +182,75 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL) {
   
   # Combine results
   if(length(results_list) > 0) {
-    return(do.call(rbind, results_list))
+    combined_result <- do.call(rbind, results_list)
+    # Remove row names
+    rownames(combined_result) <- NULL
+    
+    # Sort results from largest to smallest based on Median column
+    combined_result <- combined_result[order(combined_result$Median, decreasing = TRUE), ]
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "median", "stat")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$table(
+            htmltools::tags$thead(
+              htmltools::tags$tr(
+                lapply(names(combined_result), function(col) {
+                  htmltools::tags$th(col)
+                })
+              )
+            ),
+            htmltools::tags$tbody(
+              lapply(1:nrow(combined_result), function(i) {
+                htmltools::tags$tr(
+                  lapply(combined_result[i, ], function(cell) {
+                    htmltools::tags$td(as.character(cell))
+                  })
+                )
+              })
+            )
+          )
+        )
+        htmltools::html_print(html_content)
+      } else {
+        View(combined_result)
+      }
+    }
+    
+    return(combined_result)
   } else {
     # Return empty result if no valid observations
     empty_result <- data.frame(
       Response = character(0),
-      Disaggregation = character(0),
-      DisaggLevel = character(0),
       Median = numeric(0),
       Count = integer(0),
       Valid = integer(0),
       stringsAsFactors = FALSE
     )
+    
+    # Show as HTML table in Viewer pane if requested
+    if(show_view) {
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "median", "stat")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$p("No data available")
+        )
+        htmltools::html_print(html_content)
+      } else {
+        View(empty_result)
+      }
+    }
+    
     return(empty_result)
   }
 }

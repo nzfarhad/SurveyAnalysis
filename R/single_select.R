@@ -46,7 +46,7 @@ single_select <- function(df, ques, disag, level, show_view = FALSE){
     prop$disagg_level <- level
     
     # Format output according to requirements
-    return(format_analysis_output(prop, "perc", show_view))
+    return(format_analysis_output(prop, "perc", show_view, ques, disag, "single_select"))
   }
   
   else{
@@ -64,6 +64,6 @@ single_select <- function(df, ques, disag, level, show_view = FALSE){
     prop$disagg_level <- level
     
     # Format output according to requirements
-    return(format_analysis_output(prop, "perc", show_view))
+    return(format_analysis_output(prop, "perc", show_view, ques, disag, "single_select"))
   }
 }

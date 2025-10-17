@@ -84,12 +84,33 @@ analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_res
     
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
-      if(requireNamespace("knitr", quietly = TRUE) && requireNamespace("htmltools", quietly = TRUE)) {
-        # Create HTML table and display in Viewer pane
-        html_table <- knitr::kable(combined_result, 
-                                  caption = "Multi Select Analysis Results", 
-                                  format = "html")
-        htmltools::html_print(htmltools::HTML(html_table))
+      if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "perc", "multi_select")
+        
+        # Create HTML table directly to avoid knitr warnings
+        html_content <- htmltools::tags$div(
+          htmltools::tags$h3(title),
+          htmltools::tags$table(
+            htmltools::tags$thead(
+              htmltools::tags$tr(
+                lapply(names(combined_result), function(col) {
+                  htmltools::tags$th(col)
+                })
+              )
+            ),
+            htmltools::tags$tbody(
+              lapply(1:nrow(combined_result), function(i) {
+                htmltools::tags$tr(
+                  lapply(combined_result[i, ], function(cell) {
+                    htmltools::tags$td(as.character(cell))
+                  })
+                )
+              })
+            )
+          )
+        )
+        htmltools::html_print(html_content)
       } else {
         View(combined_result)
       }

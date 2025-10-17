@@ -78,9 +78,12 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
       if(requireNamespace("htmltools", quietly = TRUE)) {
+        # Create descriptive title
+        title <- create_analysis_title(ques, disag, "perc", "single_select")
+        
         # Create HTML table directly to avoid knitr warnings
         html_content <- htmltools::tags$div(
-          htmltools::tags$h3("Single Select Analysis Results"),
+          htmltools::tags$h3(title),
           htmltools::tags$table(
             htmltools::tags$thead(
               htmltools::tags$tr(
