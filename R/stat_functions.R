@@ -32,7 +32,7 @@
 #'                            level = "North")
 #' print(mean_age_north)
 #' @export
-stat_mean <- function(df, ques, disag, level, show_view = FALSE){
+stat_mean <- function(df, ques, disag, level, show_view = FALSE, format_output = TRUE){
   st_mean <- round(mean(as.numeric(df[[ques]]), na.rm = T), 1)
   res <- data.frame(row.names = 1)
   res$Var1 <- NA
@@ -44,8 +44,12 @@ stat_mean <- function(df, ques, disag, level, show_view = FALSE){
   res$disaggregation <- disag
   res$disagg_level <- level
   
-  # Format output according to requirements
-  return(format_analysis_output(res, "mean", show_view, ques, disag, "stat"))
+  # Format output according to requirements only if requested
+  if(format_output) {
+    return(format_analysis_output(res, "mean", show_view, ques, disag, "stat"))
+  } else {
+    return(res)
+  }
 }
 
 # Median calculation
@@ -58,7 +62,7 @@ stat_mean <- function(df, ques, disag, level, show_view = FALSE){
 #'                          level = "all")
 #' print(median_age)
 #' @export
-stat_median <- function(df, ques, disag, level, show_view = FALSE){
+stat_median <- function(df, ques, disag, level, show_view = FALSE, format_output = TRUE){
   st_median <- round(median(as.numeric(df[[ques]]), na.rm = T), 1)
   res <- data.frame(row.names = 1)
   res$Var1 <- NA
@@ -70,14 +74,18 @@ stat_median <- function(df, ques, disag, level, show_view = FALSE){
   res$disaggregation <- disag
   res$disagg_level <- level
   
-  # Format output according to requirements
-  return(format_analysis_output(res, "median", show_view, ques, disag, "stat"))
+  # Format output according to requirements only if requested
+  if(format_output) {
+    return(format_analysis_output(res, "median", show_view, ques, disag, "stat"))
+  } else {
+    return(res)
+  }
 }
 
 # Sum calculation
 #' @rdname stat_functions
 #' @export
-stat_sum <- function(df, ques, disag, level, show_view = FALSE){
+stat_sum <- function(df, ques, disag, level, show_view = FALSE, format_output = TRUE){
   st_sum <- sum(as.numeric(df[[ques]]), na.rm = T)
   res <- data.frame(row.names = 1)
   res$Var1 <- NA
@@ -89,14 +97,18 @@ stat_sum <- function(df, ques, disag, level, show_view = FALSE){
   res$disaggregation <- disag
   res$disagg_level <- level
   
-  # Format output according to requirements
-  return(format_analysis_output(res, "sum", show_view, ques, disag, "stat"))
+  # Format output according to requirements only if requested
+  if(format_output) {
+    return(format_analysis_output(res, "sum", show_view, ques, disag, "stat"))
+  } else {
+    return(res)
+  }
 }
 
 # First quartile calculation
 #' @rdname stat_functions
 #' @export
-stat_1stq <- function(df, ques, disag, level, show_view = FALSE){
+stat_1stq <- function(df, ques, disag, level, show_view = FALSE, format_output = TRUE){
   first_quart <- round(quantile(as.numeric(df[[ques]]), na.rm = T)[2], 1)
   res <- data.frame(row.names = 1)
   res$Var1 <- NA
@@ -108,14 +120,18 @@ stat_1stq <- function(df, ques, disag, level, show_view = FALSE){
   res$disaggregation <- disag
   res$disagg_level <- level
   
-  # Format output according to requirements
-  return(format_analysis_output(res, "1stq", show_view, ques, disag, "stat"))
+  # Format output according to requirements only if requested
+  if(format_output) {
+    return(format_analysis_output(res, "1stq", show_view, ques, disag, "stat"))
+  } else {
+    return(res)
+  }
 }
 
 # Third quartile calculation
 #' @rdname stat_functions
 #' @export
-stat_3rdq <- function(df, ques, disag, level, show_view = FALSE){
+stat_3rdq <- function(df, ques, disag, level, show_view = FALSE, format_output = TRUE){
   third_quart <- round(quantile(as.numeric(df[[ques]]), na.rm = T)[4], 1)
   res <- data.frame(row.names = 1)
   res$Var1 <- NA
@@ -127,14 +143,18 @@ stat_3rdq <- function(df, ques, disag, level, show_view = FALSE){
   res$disaggregation <- disag
   res$disagg_level <- level
   
-  # Format output according to requirements
-  return(format_analysis_output(res, "3rdq", show_view, ques, disag, "stat"))
+  # Format output according to requirements only if requested
+  if(format_output) {
+    return(format_analysis_output(res, "3rdq", show_view, ques, disag, "stat"))
+  } else {
+    return(res)
+  }
 }
 
 # Minimum value calculation
 #' @rdname stat_functions
 #' @export
-stat_min <- function(df, ques, disag, level, show_view = FALSE){
+stat_min <- function(df, ques, disag, level, show_view = FALSE, format_output = TRUE){
   st_min <- min(as.numeric(df[[ques]]), na.rm = T)
   res <- data.frame(row.names = 1)
   res$Var1 <- NA
@@ -146,14 +166,18 @@ stat_min <- function(df, ques, disag, level, show_view = FALSE){
   res$disaggregation <- disag
   res$disagg_level <- level
   
-  # Format output according to requirements
-  return(format_analysis_output(res, "min", show_view, ques, disag, "stat"))
+  # Format output according to requirements only if requested
+  if(format_output) {
+    return(format_analysis_output(res, "min", show_view, ques, disag, "stat"))
+  } else {
+    return(res)
+  }
 }
 
 # Maximum value calculation
 #' @rdname stat_functions
 #' @export
-stat_max <- function(df, ques, disag, level, show_view = FALSE){
+stat_max <- function(df, ques, disag, level, show_view = FALSE, format_output = TRUE){
   st_max <- max(as.numeric(df[[ques]]), na.rm = T)
   res <- data.frame(row.names = 1)
   res$Var1 <- NA
@@ -165,6 +189,10 @@ stat_max <- function(df, ques, disag, level, show_view = FALSE){
   res$disaggregation <- disag
   res$disagg_level <- level
   
-  # Format output according to requirements
-  return(format_analysis_output(res, "max", show_view, ques, disag, "stat"))
+  # Format output according to requirements only if requested
+  if(format_output) {
+    return(format_analysis_output(res, "max", show_view, ques, disag, "stat"))
+  } else {
+    return(res)
+  }
 }

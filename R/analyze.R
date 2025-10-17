@@ -46,48 +46,48 @@ analyze <- function(df, analysis_plan){
     if(ap_disagg == "all" | is.na(ap_disagg) ){
       
       if(ap_kobo_type == "select_one" & (ap_agr_type == "proportion" | ap_agr_type == "perc")){
-        temp <-  single_select(df, ap_var, ap_disagg, ap_disagg )
+        temp <-  single_select(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- temp
         
       }
       
       if (ap_kobo_type == "select_multiple" & (ap_agr_type == "proportion" | ap_agr_type == "perc")) {
-        multi_temp <- multi_select(df, ap_var, ap_disagg, ap_disagg)
+        multi_temp <- multi_select(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- multi_temp
       }
       
       if(ap_kobo_type == "integer" & ap_agr_type == "mean"){
-        mean_temp <- stat_mean(df, ap_var, ap_disagg, ap_disagg)
+        mean_temp <- stat_mean(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- mean_temp
       }
       
       if(ap_kobo_type == "integer" & ap_agr_type == "median"){
-        med_temp <- stat_median(df, ap_var, ap_disagg, ap_disagg)
+        med_temp <- stat_median(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- med_temp
       }
       
       if(ap_kobo_type == "integer" & ap_agr_type == "sum"){
-        sum_temp <- stat_sum(df, ap_var, ap_disagg, ap_disagg)
+        sum_temp <- stat_sum(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- sum_temp
       }
       
       if(ap_kobo_type == "integer" & ap_agr_type == "firstq"){
-        first_temp <- stat_1stq(df, ap_var, ap_disagg, ap_disagg)
+        first_temp <- stat_1stq(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- first_temp
       }
       
       if(ap_kobo_type == "integer" & ap_agr_type == "thirdq"){
-        third_temp <- stat_3rdq(df, ap_var, ap_disagg, ap_disagg)
+        third_temp <- stat_3rdq(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- third_temp
       }
       
       if(ap_kobo_type == "integer" & ap_agr_type == "min"){
-        min_temp <- stat_min(df, ap_var, ap_disagg, ap_disagg)
+        min_temp <- stat_min(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- min_temp
       }
       
       if(ap_kobo_type == "integer" & ap_agr_type == "max"){
-        max_temp <- stat_max(df, ap_var, ap_disagg, ap_disagg)
+        max_temp <- stat_max(df, ap_var, ap_disagg, ap_disagg, format_output = FALSE)
         res_list[[i]] <- max_temp
       }
       
@@ -102,48 +102,48 @@ analyze <- function(df, analysis_plan){
         cat(paste(ap_var, "-", var, "-", "Done\n"))
         
         if(ap_kobo_type == "select_one" & (ap_agr_type == "proportion" | ap_agr_type == "perc")){
-          temp <-  single_select(df_sub, ap_var, ap_disagg, var)
+          temp <-  single_select(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- temp
           
         }
         
         if (ap_kobo_type == "select_multiple" & (ap_agr_type == "proportion" | ap_agr_type == "perc")) {
-          multi_temp <- multi_select(df_sub, ap_var, ap_disagg, var)
+          multi_temp <- multi_select(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- multi_temp
         }
         
         if(ap_kobo_type == "integer" & ap_agr_type == "mean"){
-          mean_temp <- stat_mean(df_sub, ap_var, ap_disagg, var)
+          mean_temp <- stat_mean(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- mean_temp
         }
         
         if(ap_kobo_type == "integer" & ap_agr_type == "median"){
-          med_temp <- stat_median(df_sub, ap_var, ap_disagg, var)
+          med_temp <- stat_median(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- med_temp
         }
         
         if(ap_kobo_type == "integer" & ap_agr_type == "sum"){
-          sum_temp <- stat_sum(df_sub, ap_var, ap_disagg, var)
+          sum_temp <- stat_sum(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- sum_temp
         }
         
         if(ap_kobo_type == "integer" & ap_agr_type == "firstq"){
-          first_temp <- stat_1stq(df_sub, ap_var, ap_disagg, var)
+          first_temp <- stat_1stq(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- first_temp
         }
         
         if(ap_kobo_type == "integer" & ap_agr_type == "thirdq"){
-          third_temp <- stat_3rdq(df_sub, ap_var, ap_disagg, var)
+          third_temp <- stat_3rdq(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- third_temp
         }
         
         if(ap_kobo_type == "integer" & ap_agr_type == "min"){
-          min_temp <- stat_min(df_sub, ap_var, ap_disagg, var)
+          min_temp <- stat_min(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- min_temp
         }
         
         if(ap_kobo_type == "integer" & ap_agr_type == "max"){
-          max_temp <- stat_max(df_sub, ap_var, ap_disagg, var)
+          max_temp <- stat_max(df_sub, ap_var, ap_disagg, var, format_output = FALSE)
           res_list[[length(res_list)+1]] <- max_temp
         }
         

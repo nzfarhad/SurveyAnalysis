@@ -32,7 +32,7 @@
 #' print(gender_by_region)
 #'
 #' @export
-single_select <- function(df, ques, disag, level, show_view = FALSE){
+single_select <- function(df, ques, disag, level, show_view = FALSE, format_output = TRUE){
   
   if (all(is.na(df[[ques]]))) {
     prop <- data.frame(row.names = 1)
@@ -45,8 +45,12 @@ single_select <- function(df, ques, disag, level, show_view = FALSE){
     prop$disaggregation <- disag
     prop$disagg_level <- level
     
-    # Format output according to requirements
-    return(format_analysis_output(prop, "perc", show_view, ques, disag, "single_select"))
+    # Format output according to requirements only if requested
+    if(format_output) {
+      return(format_analysis_output(prop, "perc", show_view, ques, disag, "single_select"))
+    } else {
+      return(prop)
+    }
   }
   
   else{
@@ -63,7 +67,11 @@ single_select <- function(df, ques, disag, level, show_view = FALSE){
     prop$disaggregation <- disag
     prop$disagg_level <- level
     
-    # Format output according to requirements
-    return(format_analysis_output(prop, "perc", show_view, ques, disag, "single_select"))
+    # Format output according to requirements only if requested
+    if(format_output) {
+      return(format_analysis_output(prop, "perc", show_view, ques, disag, "single_select"))
+    } else {
+      return(prop)
+    }
   }
 }
