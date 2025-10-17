@@ -1,0 +1,728 @@
+---
+title: "Comprehensive Guide to SurveyAnalysis Package"
+author: "SurveyAnalysis Package"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Comprehensive Guide to SurveyAnalysis Package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+# Introduction
+
+The `surveyAnalysis` package provides comprehensive tools for analyzing survey data collected with Kobo Toolbox or SurveyCTO. This vignette demonstrates the package's capabilities using real-world examples from health facility assessments.
+
+## Key Features
+
+- **Multi-question type support**: Single-select, multi-select, and numeric questions
+- **Flexible aggregation methods**: Proportions, means, medians, sums, quartiles, min/max
+- **Disaggregation support**: Analyze data by subgroups (region, facility type, etc.)
+- **Multi-sheet analysis**: Handle complex survey structures with multiple data sheets
+- **Repeat group support**: Analyze nested data structures
+- **HTML label support**: Rich formatting for question labels
+
+# Basic Usage
+
+## Loading the Package
+
+```{r load-package}
+library(surveyAnalysis)
+library(dplyr)
+```
+
+## Creating Sample Data
+
+Let's start with a simple health facility assessment example:
+
+```{r sample-data}
+# Create sample facility data
+set.seed(123)
+facility_data <- data.frame(
+  facility_id = 1:50,
+  province = sample(c("Province A", "Province B", "Province C"), 50, replace = TRUE),
+  district = sample(c("District 1", "District 2", "District 3", "District 4"), 50, replace = TRUE),
+  facility_type = sample(c("Health Center", "Hospital", "Clinic"), 50, replace = TRUE),
+  area_type = sample(c("Urban", "Rural"), 50, replace = TRUE),
+  respondent_gender = sample(c("Male", "Female"), 50, replace = TRUE),
+  respondent_position = sample(c("Doctor", "Nurse", "Pharmacist", "Administrator"), 50, replace = TRUE),
+  months_working = sample(6:120, 50, replace = TRUE),
+  number_staff = sample(5:50, 50, replace = TRUE),
+  total_patients_year = sample(1000:10000, 50, replace = TRUE),
+  rmu_training_received = sample(c("Yes", "No"), 50, replace = TRUE, prob = c(0.7, 0.3)),
+  stringsAsFactors = FALSE
+)
+
+# Create sample patient consultation data
+patient_data <- data.frame(
+  consultation_id = 1:200,
+  facility_id = sample(1:50, 200, replace = TRUE),
+  patient_gender = sample(c("Male", "Female"), 200, replace = TRUE),
+  diagnosis = sample(c("Malaria", "Diarrhea", "Pneumonia", "Cough/Cold", "Other"), 200, replace = TRUE),
+  medicines_prescribed = sample(c("Tablet; Syrup", "Injection", "Tablet", "Syrup; Tablet", "None"), 200, replace = TRUE),
+  number_medicines = sample(0:5, 200, replace = TRUE),
+  antibiotic_prescribed = sample(c("Yes", "No"), 200, replace = TRUE, prob = c(0.4, 0.6)),
+  injection_prescribed = sample(c("Yes", "No"), 200, replace = TRUE, prob = c(0.2, 0.8)),
+  stringsAsFactors = FALSE
+)
+
+# Merge facility type into patient data
+patient_data <- patient_data %>%
+  left_join(facility_data %>% select(facility_id, facility_type), by = "facility_id")
+```
+
+## Creating an Analysis Plan
+
+The analysis plan defines what analyses to perform:
+
+```{r analysis-plan}
+# Create comprehensive analysis plan
+analysis_plan <- data.frame(
+  variable = c(
+    # Facility-level variables
+    "province", "district", "facility_type", "area_type", "respondent_gender",
+    "months_working", "number_staff", "total_patients_year", "rmu_training_received",
+    
+    # Patient-level variables
+    "patient_gender", "diagnosis", "medicines_prescribed", "number_medicines",
+    "antibiotic_prescribed", "injection_prescribed",
+    
+    # Disaggregated analyses
+    "province", "district", "facility_type", "area_type", "respondent_gender",
+    "months_working", "number_staff", "total_patients_year", "rmu_training_received",
+    "patient_gender", "diagnosis", "medicines_prescribed", "number_medicines",
+    "antibiotic_prescribed", "injection_prescribed"
+  ),
+  
+  label = c(
+    # Facility-level variables
+    "<b>Province</b>", "<b>District</b>", "<b>Facility Type</b>", "<b>Area Type</b>", 
+    "<b>Respondent Gender</b>", "<b>Months Working</b>", "<b>Number of Staff</b>", 
+    "<b>Total Patients per Year</b>", "<b>RMU Training Received</b>",
+    
+    # Patient-level variables
+    "<b>Patient Gender</b>", "<b>Diagnosis</b>", "<b>Medicines Prescribed</b>", 
+    "<b>Number of Medicines</b>", "<b>Antibiotic Prescribed</b>", "<b>Injection Prescribed</b>",
+    
+    # Disaggregated analyses (by facility type)
+    "<b>Province</b>", "<b>District</b>", "<b>Facility Type</b>", "<b>Area Type</b>", 
+    "<b>Respondent Gender</b>", "<b>Months Working</b>", "<b>Number of Staff</b>", 
+    "<b>Total Patients per Year</b>", "<b>RMU Training Received</b>",
+    "<b>Patient Gender</b>", "<b>Diagnosis</b>", "<b>Medicines Prescribed</b>", 
+    "<b>Number of Medicines</b>", "<b>Antibiotic Prescribed</b>", "<b>Injection Prescribed</b>"
+  ),
+  
+  kobo_type = c(
+    # Facility-level variables
+    "select_one", "select_one", "select_one", "select_one", "select_one",
+    "integer", "integer", "integer", "select_one",
+    
+    # Patient-level variables
+    "select_one", "select_one", "select_multiple", "integer",
+    "select_one", "select_one",
+    
+    # Disaggregated analyses
+    "select_one", "select_one", "select_one", "select_one", "select_one",
+    "integer", "integer", "integer", "select_one",
+    "select_one", "select_one", "select_multiple", "integer",
+    "select_one", "select_one"
+  ),
+  
+  aggregation_method = c(
+    # Facility-level variables
+    "proportion", "proportion", "proportion", "proportion", "proportion",
+    "mean", "mean", "sum", "proportion",
+    
+    # Patient-level variables
+    "proportion", "proportion", "proportion", "mean",
+    "proportion", "proportion",
+    
+    # Disaggregated analyses
+    "proportion", "proportion", "proportion", "proportion", "proportion",
+    "mean", "mean", "sum", "proportion",
+    "proportion", "proportion", "proportion", "mean",
+    "proportion", "proportion"
+  ),
+  
+  disaggregation = c(
+    # Facility-level variables
+    "all", "all", "all", "all", "all", "all", "all", "all", "all",
+    
+    # Patient-level variables
+    "all", "all", "all", "all", "all", "all",
+    
+    # Disaggregated analyses (by facility type)
+    "facility_type", "facility_type", "facility_type", "facility_type", "facility_type",
+    "facility_type", "facility_type", "facility_type", "facility_type",
+    "facility_type", "facility_type", "facility_type", "facility_type",
+    "facility_type", "facility_type"
+  ),
+  
+  disagg_label = c(
+    # Facility-level variables
+    "all", "all", "all", "all", "all", "all", "all", "all", "all",
+    
+    # Patient-level variables
+    "all", "all", "all", "all", "all", "all",
+    
+    # Disaggregated analyses
+    "<b>Facility Type</b>", "<b>Facility Type</b>", "<b>Facility Type</b>", 
+    "<b>Facility Type</b>", "<b>Facility Type</b>", "<b>Facility Type</b>", 
+    "<b>Facility Type</b>", "<b>Facility Type</b>", "<b>Facility Type</b>",
+    "<b>Facility Type</b>", "<b>Facility Type</b>", "<b>Facility Type</b>", 
+    "<b>Facility Type</b>", "<b>Facility Type</b>", "<b>Facility Type</b>"
+  ),
+  
+  sheet = c(
+    # Facility-level variables
+    "facility", "facility", "facility", "facility", "facility", 
+    "facility", "facility", "facility", "facility",
+    
+    # Patient-level variables
+    "patient", "patient", "patient", "patient", "patient", "patient",
+    
+    # Disaggregated analyses
+    "facility", "facility", "facility", "facility", "facility", 
+    "facility", "facility", "facility", "facility",
+    "patient", "patient", "patient", "patient", "patient", "patient"
+  ),
+  
+  Remarks = c(
+    # Facility-level variables
+    "", "", "", "", "", "", "", "", "",
+    
+    # Patient-level variables
+    "", "", "", "", "", "",
+    
+    # Disaggregated analyses
+    "", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", ""
+  ),
+  
+  repeat_for = c(
+    # Facility-level variables
+    "", "", "", "", "", "", "", "", "",
+    
+    # Patient-level variables
+    "", "", "", "", "", "",
+    
+    # Disaggregated analyses
+    "", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", ""
+  ),
+  
+  stringsAsFactors = FALSE
+)
+
+# Display structure
+cat("Analysis Plan Structure:\n")
+cat("Total variables:", nrow(analysis_plan), "\n")
+cat("Unique sheets:", length(unique(analysis_plan$sheet)), "\n")
+cat("Question types:", paste(unique(analysis_plan$kobo_type), collapse = ", "), "\n")
+cat("Aggregation methods:", paste(unique(analysis_plan$aggregation_method), collapse = ", "), "\n")
+```
+
+# Enhanced Functions with Automatic Disaggregation
+
+The package includes enhanced versions of all analysis functions that automatically handle disaggregation internally. These functions intelligently detect disaggregation variables and loop through all levels automatically, making analysis much simpler.
+
+## Key Features
+
+- **Automatic disaggregation**: No need to manually loop through levels
+- **Conditional analysis**: Automatically detects if disaggregation variable is present
+- **Flexible usage**: Can analyze overall or by specific levels
+- **Error handling**: Validates data and provides clear error messages
+
+## Enhanced Function Examples
+
+### Enhanced Single-Select Analysis
+
+```{r enhanced-single-select}
+# Create sample data
+sample_data <- data.frame(
+  gender = c("Male", "Female", "Male", "Female", "Male"),
+  region = c("North", "South", "North", "South", "East"),
+  facility_type = c("Hospital", "Clinic", "Hospital", "Health Center", "Clinic")
+)
+
+# Analyze gender overall (no disaggregation needed)
+gender_results <- analyze_single_select(df = sample_data, ques = "gender")
+print("Gender Analysis (Overall):")
+print(gender_results)
+
+# Analyze gender by region (automatic disaggregation through all levels)
+gender_by_region <- analyze_single_select(df = sample_data, 
+                                         ques = "gender", 
+                                         disag = "region")
+print("Gender Analysis (by Region):")
+print(gender_by_region)
+
+# Analyze gender by specific region only
+gender_north <- analyze_single_select(df = sample_data, 
+                                     ques = "gender", 
+                                     disag = "region", 
+                                     level = "North")
+print("Gender Analysis (North Region Only):")
+print(gender_north)
+```
+
+### Enhanced Multi-Select Analysis
+
+```{r enhanced-multi-select}
+# Create sample data with multi-select responses
+sample_data <- data.frame(
+  services_used = c("Health; Education", "Health", "Education; Transport", 
+                    "Health; Education; Transport", "Transport"),
+  region = c("North", "South", "North", "South", "East")
+)
+
+# Analyze services overall
+services_results <- analyze_multi_select(df = sample_data, 
+                                        ques = "services_used",
+                                        multi_response_sep = ";")
+print("Services Analysis (Overall):")
+print(services_results)
+
+# Analyze services by region (automatic disaggregation)
+services_by_region <- analyze_multi_select(df = sample_data, 
+                                          ques = "services_used", 
+                                          disag = "region",
+                                          multi_response_sep = ";")
+print("Services Analysis (by Region):")
+print(services_by_region)
+```
+
+### Enhanced Statistical Analysis
+
+```{r enhanced-statistical}
+# Create sample numeric data
+sample_data <- data.frame(
+  age = c(25, 30, 35, 40, 28, 32, 45, 38),
+  income = c(1000, 1500, 2000, 2500, 1200, 1800, 3000, 2200),
+  region = c("North", "South", "North", "South", "East", "North", "South", "East")
+)
+
+# Calculate mean age overall
+mean_age <- analyze_mean(df = sample_data, ques = "age")
+print("Mean Age (Overall):")
+print(mean_age)
+
+# Calculate mean age by region (automatic disaggregation)
+mean_age_by_region <- analyze_mean(df = sample_data, 
+                                  ques = "age", 
+                                  disag = "region")
+print("Mean Age (by Region):")
+print(mean_age_by_region)
+
+# Calculate median income by region
+median_income_by_region <- analyze_median(df = sample_data, 
+                                          ques = "income", 
+                                          disag = "region")
+print("Median Income (by Region):")
+print(median_income_by_region)
+
+# Calculate sum by region
+sum_by_region <- analyze_sum(df = sample_data, 
+                            ques = "income", 
+                            disag = "region")
+print("Sum Income (by Region):")
+print(sum_by_region)
+```
+
+### Enhanced Quartile and Min/Max Analysis
+
+```{r enhanced-quartiles}
+# Calculate quartiles by region
+q1_by_region <- analyze_first_quartile(df = sample_data, 
+                                      ques = "income", 
+                                      disag = "region")
+print("First Quartile Income (by Region):")
+print(q1_by_region)
+
+q3_by_region <- analyze_third_quartile(df = sample_data, 
+                                      ques = "income", 
+                                      disag = "region")
+print("Third Quartile Income (by Region):")
+print(q3_by_region)
+
+# Calculate min/max by region
+min_by_region <- analyze_min(df = sample_data, 
+                            ques = "income", 
+                            disag = "region")
+print("Minimum Income (by Region):")
+print(min_by_region)
+
+max_by_region <- analyze_max(df = sample_data, 
+                            ques = "income", 
+                            disag = "region")
+print("Maximum Income (by Region):")
+print(max_by_region)
+```
+
+### Batch Analysis with Enhanced Functions
+
+```{r enhanced-batch}
+# Create comprehensive sample data for batch analysis
+sample_data <- data.frame(
+  gender = c("Male", "Female", "Male", "Female", "Male", "Female"),
+  age = c(25, 30, 35, 40, 28, 32),
+  income = c(50000, 60000, 70000, 80000, 45000, 55000),
+  region = c("North", "South", "North", "South", "East", "East")
+)
+
+# Analyze multiple variables with automatic disaggregation
+variables_to_analyze <- c("gender", "age", "income")
+results_list <- list()
+
+for(var in variables_to_analyze) {
+  if(var == "gender") {
+    results_list[[var]] <- analyze_single_select(df = sample_data, 
+                                                ques = var, 
+                                                disag = "region")
+  } else if(var %in% c("age", "income")) {
+    results_list[[var]] <- analyze_mean(df = sample_data, 
+                                       ques = var, 
+                                       disag = "region")
+  }
+}
+
+# Display results
+for(var in names(results_list)) {
+  cat("\\n=== Results for", var, "===\\n")
+  print(results_list[[var]])
+}
+```
+
+### Comparison: Enhanced vs Basic Functions
+
+```{r comparison-example}
+# Enhanced function (automatic disaggregation)
+cat("Enhanced Function Usage:\n")
+enhanced_result <- analyze_mean(df = sample_data, 
+                               ques = "age", 
+                               disag = "region")
+print(enhanced_result)
+
+# Basic function (manual disaggregation required)
+cat("\nBasic Function Usage (manual loop):\n")
+regions <- unique(sample_data$region)
+basic_results <- list()
+
+for(region in regions) {
+  subset_data <- sample_data[sample_data$region == region, ]
+  basic_results[[region]] <- stat_mean(subset_data, "age", "region", region)
+}
+
+basic_result <- do.call(rbind, basic_results)
+print(basic_result)
+
+cat("\nBoth approaches produce the same results, but enhanced functions are much simpler to use!\n")
+```
+
+# Standalone Function Usage
+
+Each analysis function can be used independently without requiring the main wrapper functions. This is useful for quick analyses or when you need more control over the analysis process.
+
+## Individual Function Examples
+
+### Single-Select Analysis
+
+```{r standalone-single-select}
+# Create sample data
+sample_data <- data.frame(
+  gender = c("Male", "Female", "Male", "Female", "Male"),
+  region = c("North", "South", "North", "South", "East"),
+  facility_type = c("Hospital", "Clinic", "Hospital", "Health Center", "Clinic")
+)
+
+# Analyze gender overall
+gender_results <- single_select(df = sample_data, 
+                               ques = "gender", 
+                               disag = "all", 
+                               level = "all")
+print("Gender Analysis (Overall):")
+print(gender_results)
+
+# Analyze gender by region
+gender_by_region <- single_select(df = sample_data, 
+                                 ques = "gender", 
+                                 disag = "region", 
+                                 level = "North")
+print("Gender Analysis (North Region):")
+print(gender_by_region)
+```
+
+### Multi-Select Analysis
+
+```{r standalone-multi-select}
+# Create sample data with multi-select responses
+sample_data <- data.frame(
+  services_used = c("Health; Education", "Health", "Education; Transport", 
+                    "Health; Education; Transport", "Transport"),
+  region = c("North", "South", "North", "South", "East")
+)
+
+# Set the separator
+multi_response_sep <<- ";"
+
+# Analyze services overall
+services_results <- multi_select(df = sample_data, 
+                                ques = "services_used", 
+                                disag = "all", 
+                                level = "all")
+print("Services Analysis (Overall):")
+print(services_results)
+```
+
+### Statistical Analysis
+
+```{r standalone-statistical}
+# Create sample numeric data
+sample_data <- data.frame(
+  age = c(25, 30, 35, 40, 28, 32, 45, 38),
+  income = c(1000, 1500, 2000, 2500, 1200, 1800, 3000, 2200),
+  region = c("North", "South", "North", "South", "East", "North", "South", "East")
+)
+
+# Calculate mean age
+mean_age <- stat_mean(df = sample_data, 
+                     ques = "age", 
+                     disag = "all", 
+                     level = "all")
+print("Mean Age (Overall):")
+print(mean_age)
+
+# Calculate median income by region
+median_income_north <- stat_median(df = sample_data, 
+                                  ques = "income", 
+                                  disag = "region", 
+                                  level = "North")
+print("Median Income (North Region):")
+print(median_income_north)
+
+# Calculate sum of income
+total_income <- stat_sum(df = sample_data, 
+                        ques = "income", 
+                        disag = "all", 
+                        level = "all")
+print("Total Income (Overall):")
+print(total_income)
+```
+
+### Batch Analysis with Individual Functions
+
+```{r standalone-batch}
+# Analyze multiple variables using individual functions
+variables_to_analyze <- c("gender", "age", "income")
+results_list <- list()
+
+for(var in variables_to_analyze) {
+  if(var == "gender") {
+    results_list[[var]] <- single_select(df = sample_data, 
+                                        ques = var, 
+                                        disag = "all", 
+                                        level = "all")
+  } else if(var %in% c("age", "income")) {
+    results_list[[var]] <- stat_mean(df = sample_data, 
+                                    ques = var, 
+                                    disag = "all", 
+                                    level = "all")
+  }
+}
+
+# Combine results
+combined_results <- do.call(rbind, results_list)
+print("Combined Individual Function Results:")
+print(combined_results)
+```
+
+# Main Analysis Workflow
+
+## Single Sheet Analysis
+
+Let's start with facility-level analysis:
+
+```{r facility-analysis}
+# Filter analysis plan for facility data
+facility_plan <- analysis_plan[analysis_plan$sheet == "facility", ]
+
+# Run facility analysis
+facility_results <- analysis_func(
+  df = facility_data, 
+  ap = facility_plan,
+  multi_response_sep = ";"
+)
+
+# Display results
+cat("Facility Analysis Results:\n")
+cat("========================\n")
+print(head(facility_results, 10))
+```
+
+## Patient-Level Analysis
+
+```{r patient-analysis}
+# Filter analysis plan for patient data
+patient_plan <- analysis_plan[analysis_plan$sheet == "patient", ]
+
+# Run patient analysis
+patient_results <- analysis_func(
+  df = patient_data, 
+  ap = patient_plan,
+  multi_response_sep = ";"
+)
+
+# Display results
+cat("Patient Analysis Results:\n")
+cat("========================\n")
+print(head(patient_results, 10))
+```
+
+## Multi-Sheet Analysis
+
+```{r multi-sheet-analysis}
+# Prepare data sheets
+data_sheets <- list(
+  facility = facility_data,
+  patient = patient_data
+)
+
+# Run analysis for each sheet
+all_results <- list()
+for(sheet_name in unique(analysis_plan$sheet)) {
+  sheet_plan <- analysis_plan[analysis_plan$sheet == sheet_name, ]
+  sheet_data <- data_sheets[[sheet_name]]
+  
+  cat("Analyzing", sheet_name, "data...\n")
+  all_results[[sheet_name]] <- analysis_func(
+    df = sheet_data, 
+    ap = sheet_plan,
+    multi_response_sep = ";"
+  )
+}
+
+# Combine results
+final_results <- do.call(rbind, all_results)
+
+# Summary
+cat("Combined Analysis Results:\n")
+cat("=========================\n")
+cat("Total analyses:", nrow(final_results), "\n")
+cat("Unique questions:", length(unique(final_results$Question)), "\n")
+cat("Disaggregation levels:", length(unique(final_results$Disaggregation_level)), "\n")
+```
+
+# Advanced Features
+
+## Complex Disaggregation
+
+The package supports complex disaggregation patterns:
+
+```{r complex-disaggregation}
+# Create analysis plan with complex disaggregation
+complex_plan <- data.frame(
+  variable = c("antibiotic_prescribed", "number_medicines", "injection_prescribed"),
+  label = c("Antibiotic Prescribed", "Number of Medicines", "Injection Prescribed"),
+  kobo_type = c("select_one", "integer", "select_one"),
+  aggregation_method = c("proportion", "mean", "proportion"),
+  disaggregation = c("facility_type", "diagnosis", "facility_type > diagnosis"),
+  disagg_label = c("Facility Type", "Diagnosis", "Facility Type > Diagnosis"),
+  sheet = c("patient", "patient", "patient"),
+  Remarks = c("", "", ""),
+  repeat_for = c("", "", ""),
+  stringsAsFactors = FALSE
+)
+
+# Run complex analysis
+complex_results <- analysis_func(
+  df = patient_data, 
+  ap = complex_plan,
+  multi_response_sep = ";"
+)
+
+cat("Complex Disaggregation Results:\n")
+cat("==============================\n")
+print(head(complex_results, 15))
+```
+
+## Filtering and Summarizing Results
+
+```{r filter-results}
+# Filter results for specific questions
+antibiotic_results <- final_results %>%
+  filter(Question == "antibiotic_prescribed") %>%
+  select(Disaggregation_level, Response, Result, Count, Denominator)
+
+cat("Antibiotic Prescription Results:\n")
+cat("===============================\n")
+print(antibiotic_results)
+
+# Summary statistics
+cat("\nSummary Statistics:\n")
+cat("==================\n")
+summary_stats <- final_results %>%
+  filter(Aggregation_method %in% c("mean", "sum")) %>%
+  group_by(Question) %>%
+  summarise(
+    avg_result = mean(Result, na.rm = TRUE),
+    min_result = min(Result, na.rm = TRUE),
+    max_result = max(Result, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+print(summary_stats)
+```
+
+# Best Practices
+
+## 1. Analysis Plan Design
+
+- **Use descriptive labels**: Include HTML formatting for better presentation
+- **Group related analyses**: Use the `sheet` column to organize analyses by data source
+- **Plan disaggregation**: Consider which variables are most meaningful for disaggregation
+- **Document calculated variables**: Use the `Remarks` column to note preprocessing steps
+
+## 2. Data Preparation
+
+- **Clean variable names**: Use consistent naming conventions
+- **Handle missing values**: Ensure proper NA handling
+- **Validate data types**: Confirm numeric variables are properly formatted
+- **Check multi-response separators**: Verify separator consistency
+
+## 3. Result Interpretation
+
+- **Check denominators**: Always verify the number of valid responses
+- **Review disaggregation**: Ensure sufficient sample sizes for subgroups
+- **Validate calculations**: Cross-check key indicators manually
+- **Document methodology**: Keep track of analysis decisions
+
+# Troubleshooting
+
+## Common Issues
+
+1. **Function not found**: Run `devtools::document()` to update exports
+2. **Missing dependencies**: Install required packages (dplyr, stringr, reshape2)
+3. **Data type errors**: Check that numeric variables are properly formatted
+4. **Empty results**: Verify that variable names match between data and analysis plan
+
+## Getting Help
+
+- Check function documentation: `?analysis_func`
+- View package help: `?surveyAnalysis`
+- Run tests: `devtools::test()`
+- Check package integrity: `devtools::check()`
+
+# Conclusion
+
+The `surveyAnalysis` package provides a comprehensive framework for analyzing survey data with support for complex structures, multiple question types, and flexible disaggregation patterns. By following the examples in this vignette, you can adapt the package to your specific survey analysis needs.
+
+For more information, see the package documentation and examples in the README file.
