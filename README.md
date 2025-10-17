@@ -6,7 +6,7 @@ A comprehensive R package for analyzing survey data collected with Kobo Toolbox 
 
 ```r
 # Install from GitHub (if available)
-devtools::install_github("yourusername/surveyAnalysis")
+devtools::install_github("nzfarhad/surveyAnalysis")
 
 # Or install locally
 devtools::install("path/to/surveyAnalysis")
@@ -64,157 +64,6 @@ results <- analysis_func(df = consultation_data,
                         multi_response_sep = ";")
 ```
 
-## Enhanced Functions with Automatic Disaggregation
-
-The package now includes enhanced versions of all analysis functions that automatically handle disaggregation internally. These functions intelligently detect disaggregation variables and loop through all levels automatically, making analysis much simpler.
-
-### Key Features
-
-- **Automatic disaggregation**: No need to manually loop through levels
-- **Conditional analysis**: Automatically detects if disaggregation variable is present
-- **Flexible usage**: Can analyze overall or by specific levels
-- **Error handling**: Validates data and provides clear error messages
-
-### Enhanced Single-Select Analysis
-
-```r
-# Create sample data
-survey_data <- data.frame(
-  gender = c("Male", "Female", "Male", "Female", "Male"),
-  region = c("North", "South", "North", "South", "East"),
-  facility_type = c("Hospital", "Clinic", "Hospital", "Health Center", "Clinic")
-)
-
-# Analyze gender overall (no disaggregation needed)
-gender_results <- analyze_single_select(df = survey_data, ques = "gender")
-print(gender_results)
-
-# Analyze gender by region (automatic disaggregation through all levels)
-gender_by_region <- analyze_single_select(df = survey_data, 
-                                         ques = "gender", 
-                                         disag = "region")
-print(gender_by_region)
-
-# Analyze gender by specific region only
-gender_north <- analyze_single_select(df = survey_data, 
-                                     ques = "gender", 
-                                     disag = "region", 
-                                     level = "North")
-print(gender_north)
-```
-
-### Enhanced Multi-Select Analysis
-
-```r
-# Create sample data with multi-select responses
-survey_data <- data.frame(
-  services_used = c("Health; Education", "Health", "Education; Transport", 
-                    "Health; Education; Transport", "Transport"),
-  region = c("North", "South", "North", "South", "East")
-)
-
-# Analyze services overall
-services_results <- analyze_multi_select(df = survey_data, 
-                                        ques = "services_used",
-                                        multi_response_sep = ";")
-print(services_results)
-
-# Analyze services by region (automatic disaggregation)
-services_by_region <- analyze_multi_select(df = survey_data, 
-                                          ques = "services_used", 
-                                          disag = "region",
-                                          multi_response_sep = ";")
-print(services_by_region)
-```
-
-### Enhanced Statistical Analysis
-
-```r
-# Create sample numeric data
-survey_data <- data.frame(
-  age = c(25, 30, 35, 40, 28, 32, 45, 38),
-  income = c(1000, 1500, 2000, 2500, 1200, 1800, 3000, 2200),
-  region = c("North", "South", "North", "South", "East", "North", "South", "East")
-)
-
-# Calculate mean age overall
-mean_age <- analyze_mean(df = survey_data, ques = "age")
-print(mean_age)
-
-# Calculate mean age by region (automatic disaggregation)
-mean_age_by_region <- analyze_mean(df = survey_data, 
-                                  ques = "age", 
-                                  disag = "region")
-print(mean_age_by_region)
-
-# Calculate median income by region
-median_income_by_region <- analyze_median(df = survey_data, 
-                                          ques = "income", 
-                                          disag = "region")
-print(median_income_by_region)
-
-# Calculate sum by region
-sum_by_region <- analyze_sum(df = survey_data, 
-                            ques = "income", 
-                            disag = "region")
-print(sum_by_region)
-
-# Calculate quartiles by region
-q1_by_region <- analyze_first_quartile(df = survey_data, 
-                                      ques = "income", 
-                                      disag = "region")
-print(q1_by_region)
-
-q3_by_region <- analyze_third_quartile(df = survey_data, 
-                                      ques = "income", 
-                                      disag = "region")
-print(q3_by_region)
-
-# Calculate min/max by region
-min_by_region <- analyze_min(df = survey_data, 
-                            ques = "income", 
-                            disag = "region")
-print(min_by_region)
-
-max_by_region <- analyze_max(df = survey_data, 
-                            ques = "income", 
-                            disag = "region")
-print(max_by_region)
-```
-
-### Batch Analysis with Enhanced Functions
-
-```r
-# Analyze multiple variables with automatic disaggregation
-variables_to_analyze <- c("gender", "age", "income")
-results_list <- list()
-
-for(var in variables_to_analyze) {
-  if(var == "gender") {
-    results_list[[var]] <- analyze_single_select(df = survey_data, 
-                                                ques = var, 
-                                                disag = "region")
-  } else if(var %in% c("age", "income")) {
-    results_list[[var]] <- analyze_mean(df = survey_data, 
-                                       ques = var, 
-                                       disag = "region")
-  }
-}
-
-# Combine results
-combined_results <- do.call(rbind, results_list)
-print(combined_results)
-```
-
-### Comparison: Enhanced vs Basic Functions
-
-| Feature | Enhanced Functions | Basic Functions |
-|---------|-------------------|-----------------|
-| **Disaggregation** | Automatic looping | Manual looping required |
-| **Usage** | `analyze_mean(df, "age", disag = "region")` | Manual loop through levels |
-| **Error Handling** | Built-in validation | Manual validation needed |
-| **Flexibility** | Overall or disaggregated | Always requires level specification |
-| **Code Length** | Shorter, cleaner | Longer, more complex |
 
 ## Standalone Function Usage
 
@@ -325,7 +174,7 @@ print(combined_results)
 
 ## Function Reference
 
-### Enhanced Functions (Recommended)
+### Standalone Functions
 
 - `analyze_single_select()`: Enhanced single-select analysis with automatic disaggregation
 - `analyze_multi_select()`: Enhanced multi-select analysis with automatic disaggregation
@@ -337,22 +186,10 @@ print(combined_results)
 - `analyze_min()`: Enhanced minimum calculation with automatic disaggregation
 - `analyze_max()`: Enhanced maximum calculation with automatic disaggregation
 
-### Main Functions
+### Batch Analysis Functions
 
 - `analysis_func()`: Main wrapper function for comprehensive analysis
-- `analyze()`: Core analysis function based on analysis plan
 
-### Basic Analysis Functions
-
-- `single_select()`: Analyze single-select questions
-- `multi_select()`: Analyze multi-select questions
-- `stat_mean()`: Calculate mean values
-- `stat_median()`: Calculate median values
-- `stat_sum()`: Calculate sum values
-- `stat_1stq()`: Calculate first quartile
-- `stat_3rdq()`: Calculate third quartile
-- `stat_min()`: Calculate minimum values
-- `stat_max()`: Calculate maximum values
 
 ## Analysis Plan Structure
 
@@ -361,7 +198,7 @@ The analysis plan is a data frame with the following columns:
 | Column | Description | Required | Example |
 |--------|-------------|----------|---------|
 | `variable` | Column name in dataset | Yes | "gender" |
-| `label` | Question label (can include HTML tags) | No | "<b>Gender:</b>" |
+| `label` | Question label | No | "<b>Gender:</b>" |
 | `kobo_type` | Question type | Yes | "select_one", "select_multiple", "integer" |
 | `aggregation_method` | Analysis method | Yes | "proportion", "mean", "median", "sum", etc. |
 | `disaggregation` | Disaggregation variable | Yes | "region" or "all" |
