@@ -34,14 +34,28 @@
 #' print(services_by_region)
 #'
 #' @export
-analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_response_sep = "; ", show_view = FALSE, wide_format = FALSE, dt_table = FALSE) {
+analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_response_sep = "; ", show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, chart_type = "column") {
   
   # Set global separator
   multi_response_sep <<- multi_response_sep
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
-    return(multi_select(df, ques, "all", "all", show_view))
+    result <- multi_select(df, ques, "all", "all", show_view)
+    
+    # Create visualization if requested
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, "all", "perc", "multi_select")
+      plot_obj <- create_visualization(result, "perc", plot_title, max_categories,
+                                     color_primary = "#730202", color_secondary = "#f27304",
+                                     chart_type = chart_type)
+      if(!is.null(plot_obj)) {
+        print(plot_obj)
+        return(list(table = result, plot = plot_obj))
+      }
+    }
+    
+    return(result)
   }
   
   # Check if disaggregation variable exists in data
@@ -124,6 +138,18 @@ analyze_multi_select <- function(df, ques, disag = NULL, level = NULL, multi_res
         } else {
           View(combined_result)
         }
+      }
+    }
+    
+    # Create visualization if requested
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, disag, "perc", "multi_select")
+      plot_obj <- create_visualization(combined_result, "perc", plot_title, max_categories,
+                                     color_primary = "#730202", color_secondary = "#f27304",
+                                     chart_type = chart_type)
+      if(!is.null(plot_obj)) {
+        print(plot_obj)
+        return(list(table = combined_result, plot = plot_obj))
       }
     }
     

@@ -21,4 +21,5 @@ Suggests:
     knitr,
     rmarkdown,
     htmltools,
-    DT
+    DT,
+    ggplot2
