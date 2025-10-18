@@ -564,13 +564,13 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
     # Single box plot for overall data
     p <- ggplot2::ggplot(data, ggplot2::aes_string(x = "1", y = ques)) +
       ggplot2::geom_boxplot(fill = color_primary, color = "black", size = 0.5, alpha = 0.7) +
-      ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "red", color = "red") +
-      ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "blue") +
+      ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "#FFD700", color = "#B8860B") +
+      ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "#2E8B57") +
       ggplot2::labs(
         title = title,
         x = "",
         y = ques,
-        subtitle = "Red diamond = Mean, Blue circle = Median"
+        subtitle = "Gold diamond = Mean, Green circle = Median"
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
@@ -588,7 +588,7 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
   }
   
   # Multiple box plots for disaggregated data
-  # Clean data - remove NA values
+  # Clean data - remove NA values but be more careful about filtering
   clean_data <- data[!is.na(data[[ques]]) & !is.na(data[[disag]]), ]
   
   if (nrow(clean_data) == 0) {
@@ -616,16 +616,39 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
   # Convert disaggregation variable to factor for proper ordering
   clean_data[[disag]] <- as.factor(clean_data[[disag]])
   
+  # Check if we have enough data for meaningful boxplots
+  if (nrow(clean_data) < 5) {
+    warning("Insufficient data for meaningful boxplot visualization")
+    return(NULL)
+  }
+  
+  # Calculate mean and median values for each group to add as text labels
+  summary_stats <- clean_data %>%
+    dplyr::group_by(!!ggplot2::sym(disag)) %>%
+    dplyr::summarise(
+      mean_val = mean(!!ggplot2::sym(ques), na.rm = TRUE),
+      median_val = median(!!ggplot2::sym(ques), na.rm = TRUE),
+      .groups = 'drop'
+    )
+  
   # Create the boxplot using a simple, direct approach
   p <- ggplot2::ggplot(clean_data, ggplot2::aes_string(x = disag, y = ques)) +
     ggplot2::geom_boxplot(fill = color_primary, color = "black", size = 0.5, alpha = 0.7) +
-    ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "red", color = "red") +
-    ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "blue") +
+    ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "#FFD700", color = "#B8860B") +
+    ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "#2E8B57") +
+    ggplot2::geom_text(data = summary_stats, 
+                      ggplot2::aes_string(x = disag, y = "mean_val", 
+                                        label = "paste0('Mean: ', round(mean_val, 2))"), 
+                      vjust = -1.5, size = 3, color = "#B8860B", fontface = "bold") +
+    ggplot2::geom_text(data = summary_stats, 
+                      ggplot2::aes_string(x = disag, y = "median_val", 
+                                        label = "paste0('Median: ', round(median_val, 2))"), 
+                      vjust = -3, size = 3, color = "#2E8B57", fontface = "bold") +
     ggplot2::labs(
       title = title,
       x = disag,
       y = ques,
-      subtitle = "Red diamond = Mean, Blue circle = Median"
+      subtitle = "Gold diamond = Mean, Green circle = Median"
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
@@ -670,7 +693,7 @@ create_statistical_visualization <- function(data, analysis_type, title, max_cat
   
   if (is_disaggregated) {
     return(create_disaggregated_statistical_chart(data, analysis_type, title, max_categories,
-                                                color_primary, color_secondary))
+                                                color_primary, color_secondary, original_data, ques, disag))
   } else {
     return(create_simple_statistical_chart(data, analysis_type, title, max_categories,
                                          color_primary, color_secondary))
@@ -788,14 +811,14 @@ create_simple_statistical_chart <- function(data, analysis_type, title, max_cate
 #'
 #' @export
 create_disaggregated_statistical_chart <- function(data, analysis_type, title, max_categories,
-                                                 color_primary, color_secondary) {
+                                                 color_primary, color_secondary, original_data = NULL, ques = NULL, disag = NULL) {
   
   # Check if this is wide format data
   is_wide_format <- any(grepl("_", names(data)))
   
   if (is_wide_format) {
     return(create_wide_format_statistical_chart(data, analysis_type, title, max_categories,
-                                              color_primary, color_secondary))
+                                               color_primary, color_secondary, original_data, ques, disag))
   } else {
     return(create_long_format_statistical_chart(data, analysis_type, title, max_categories,
                                               color_primary, color_secondary))
@@ -815,8 +838,15 @@ create_disaggregated_statistical_chart <- function(data, analysis_type, title, m
 #'
 #' @export
 create_wide_format_statistical_chart <- function(data, analysis_type, title, max_categories,
-                                               color_primary, color_secondary) {
+                                               color_primary, color_secondary, original_data = NULL, ques = NULL, disag = NULL) {
   
+  # For statistical analysis, we should create boxplots if we have original data
+  if (!is.null(original_data) && !is.null(ques) && !is.null(disag)) {
+    # Use the original data to create boxplots
+    return(create_box_plot(original_data, ques, disag, analysis_type, title, color_primary, color_secondary))
+  }
+  
+  # Fallback to bar chart if no original data
   # Find result columns based on analysis type
   analysis_title <- stringr::str_to_title(analysis_type)
   if (analysis_type == "1stq") analysis_title <- "FirstQuartile"

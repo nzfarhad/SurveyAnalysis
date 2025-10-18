@@ -131,6 +131,9 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
     # Sort results from largest to smallest based on Mean column
     combined_result <- combined_result[order(combined_result$Mean, decreasing = TRUE), ]
     
+    # Store original result for plotting before reshaping
+    original_result_for_plot <- combined_result
+    
     # Reshape to wide format if requested
     if(wide_format && !is.null(disag) && disag != "all") {
       combined_result <- reshape_to_wide(combined_result, "mean", disag)
@@ -180,9 +183,12 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "mean", "stat")
       # Filter original data to only include the levels that were actually analyzed
-      analyzed_levels <- unique(combined_result[[disag]])
+      # Use the original combined_result before wide format reshaping for plotting
+      analyzed_levels <- unique(original_result_for_plot[[disag]])
       filtered_data <- df[df[[disag]] %in% analyzed_levels & !is.na(df[[disag]]), ]
-      plot_obj <- create_visualization(combined_result, "mean", plot_title, max_categories,
+      
+      # For plotting, always use the original data structure, not the wide format
+      plot_obj <- create_visualization(original_result_for_plot, "mean", plot_title, max_categories,
                                      original_data = filtered_data, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
@@ -330,6 +336,9 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
     # Sort results from largest to smallest based on Median column
     combined_result <- combined_result[order(combined_result$Median, decreasing = TRUE), ]
     
+    # Store original result for plotting before reshaping
+    original_result_for_plot <- combined_result
+    
     # Reshape to wide format if requested
     if(wide_format && !is.null(disag) && disag != "all") {
       combined_result <- reshape_to_wide(combined_result, "median", disag)
@@ -379,9 +388,12 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "median", "stat")
       # Filter original data to only include the levels that were actually analyzed
-      analyzed_levels <- unique(combined_result[[disag]])
+      # Use the original combined_result before wide format reshaping for plotting
+      analyzed_levels <- unique(original_result_for_plot[[disag]])
       filtered_data <- df[df[[disag]] %in% analyzed_levels & !is.na(df[[disag]]), ]
-      plot_obj <- create_visualization(combined_result, "median", plot_title, max_categories,
+      
+      # For plotting, always use the original data structure, not the wide format
+      plot_obj <- create_visualization(original_result_for_plot, "median", plot_title, max_categories,
                                      original_data = filtered_data, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
