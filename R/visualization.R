@@ -233,7 +233,7 @@ create_simple_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_y_continuous(limits = c(0, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
+      ggplot2::scale_y_continuous(limits = c(100, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
   }
   
   return(p)
@@ -400,7 +400,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_y_continuous(limits = c(0, max(plot_data$Percentage, na.rm = TRUE) * 1.1))
+      ggplot2::scale_y_continuous(limits = c(100, max(plot_data$Percentage, na.rm = TRUE) * 1.1))
   }
   
   return(p)
@@ -527,7 +527,7 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_y_continuous(limits = c(0, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
+      ggplot2::scale_y_continuous(limits = c(100, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
   }
   
   return(p)
@@ -561,11 +561,21 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
   
   # Check if disaggregation variable exists
   if (!disag %in% names(data) || disag == "all") {
+    # Calculate mean and median for single boxplot
+    mean_val <- mean(data[[ques]], na.rm = TRUE)
+    median_val <- median(data[[ques]], na.rm = TRUE)
+    
     # Single box plot for overall data
     p <- ggplot2::ggplot(data, ggplot2::aes_string(x = "1", y = ques)) +
-      ggplot2::geom_boxplot(fill = color_primary, color = "black", size = 0.5, alpha = 0.7) +
+      ggplot2::geom_boxplot(fill = color_primary, color = "black", size = 0.5, alpha = 1.0) +
       ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "#FFD700", color = "#B8860B") +
       ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "#2E8B57") +
+      ggplot2::annotate("text", x = 1, y = mean_val, 
+                       label = paste0("Mean: ", round(mean_val, 2)), 
+                       vjust = -1.5, size = 3, color = "#B8860B", fontface = "bold") +
+      ggplot2::annotate("text", x = 1, y = median_val, 
+                       label = paste0("Median: ", round(median_val, 2)), 
+                       vjust = -3, size = 3, color = "#2E8B57", fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "",
@@ -633,7 +643,7 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
   
   # Create the boxplot using a simple, direct approach
   p <- ggplot2::ggplot(clean_data, ggplot2::aes_string(x = disag, y = ques)) +
-    ggplot2::geom_boxplot(fill = color_primary, color = "black", size = 0.5, alpha = 0.7) +
+    ggplot2::geom_boxplot(fill = color_primary, color = "black", size = 0.5, alpha = 1.0) +
     ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "#FFD700", color = "#B8860B") +
     ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "#2E8B57") +
     ggplot2::geom_text(data = summary_stats, 
