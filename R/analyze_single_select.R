@@ -44,15 +44,24 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       warning("Wide format not applicable for non-disaggregated analysis")
     }
     
+    # Create DT table object if requested (regardless of show_view)
+    dt_table_obj <- NULL
+    if(dt_table) {
+      title <- create_analysis_title(ques, "all", "perc", "single_select")
+      filename <- paste0("single_select_", ques)
+      dt_table_obj <- create_dt_table(result, title, filename, display = show_view)
+    }
+    
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
       # Create descriptive title
       title <- create_analysis_title(ques, "all", "perc", "single_select")
       
       if(dt_table) {
-        # Create DT table with search and download options
-        filename <- paste0("single_select_", ques)
-        create_dt_table(result, title, filename)
+        # DT table already created above, just display it
+        if(!is.null(dt_table_obj)) {
+          print(dt_table_obj)
+        }
       } else {
         # Use basic HTML table
         if(requireNamespace("htmltools", quietly = TRUE)) {
@@ -84,16 +93,30 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       }
     }
     
-    # Create visualization if requested and show_view is TRUE
-    if(create_plot && show_view) {
+    # Create visualization object if requested (regardless of show_view)
+    plot_obj <- NULL
+    if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "perc", "single_select")
       plot_obj <- create_visualization(result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
                                      chart_type = chart_type, max_label_length = max_label_length, font_sizes = font_sizes)
-      if(!is.null(plot_obj)) {
-        print(plot_obj)
-        return(list(table = result, plot = plot_obj))
+    }
+    
+    # Display plot if requested and show_view is TRUE
+    if(create_plot && show_view && !is.null(plot_obj)) {
+      print(plot_obj)
+    }
+    
+    # Return appropriate objects based on what was requested
+    if(dt_table || create_plot || wide_format) {
+      return_list <- list(table = result)
+      if(dt_table && !is.null(dt_table_obj)) {
+        return_list$dt_table <- dt_table_obj
       }
+      if(create_plot && !is.null(plot_obj)) {
+        return_list$plot <- plot_obj
+      }
+      return(return_list)
     }
     
     return(result)
@@ -142,15 +165,24 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       combined_result <- reshape_to_wide(combined_result, "perc", disag)
     }
     
+    # Create DT table object if requested (regardless of show_view)
+    dt_table_obj <- NULL
+    if(dt_table) {
+      title <- create_analysis_title(ques, disag, "perc", "single_select")
+      filename <- paste0("single_select_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+      dt_table_obj <- create_dt_table(combined_result, title, filename, display = show_view)
+    }
+    
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
       # Create descriptive title
       title <- create_analysis_title(ques, disag, "perc", "single_select")
       
       if(dt_table) {
-        # Create DT table with search and download options
-        filename <- paste0("single_select_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
-        create_dt_table(combined_result, title, filename)
+        # DT table already created above, just display it
+        if(!is.null(dt_table_obj)) {
+          print(dt_table_obj)
+        }
       } else {
         # Use basic HTML table
         if(requireNamespace("htmltools", quietly = TRUE)) {
@@ -182,16 +214,30 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       }
     }
     
-    # Create visualization if requested and show_view is TRUE
-    if(create_plot && show_view) {
+    # Create visualization object if requested (regardless of show_view)
+    plot_obj <- NULL
+    if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "perc", "single_select")
       plot_obj <- create_visualization(combined_result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
                                      chart_type = chart_type, max_label_length = max_label_length, font_sizes = font_sizes)
-      if(!is.null(plot_obj)) {
-        print(plot_obj)
-        return(list(table = combined_result, plot = plot_obj))
+    }
+    
+    # Display plot if requested and show_view is TRUE
+    if(create_plot && show_view && !is.null(plot_obj)) {
+      print(plot_obj)
+    }
+    
+    # Return appropriate objects based on what was requested
+    if(dt_table || create_plot || wide_format) {
+      return_list <- list(table = combined_result)
+      if(dt_table && !is.null(dt_table_obj)) {
+        return_list$dt_table <- dt_table_obj
       }
+      if(create_plot && !is.null(plot_obj)) {
+        return_list$plot <- plot_obj
+      }
+      return(return_list)
     }
     
     return(combined_result)
@@ -205,6 +251,14 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       stringsAsFactors = FALSE
     )
     
+    # Create DT table object if requested (regardless of show_view)
+    dt_table_obj <- NULL
+    if(dt_table) {
+      title <- create_analysis_title(ques, disag, "perc", "single_select")
+      filename <- paste0("single_select_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+      dt_table_obj <- create_dt_table(empty_result, title, filename, display = show_view)
+    }
+    
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
       if(requireNamespace("htmltools", quietly = TRUE)) {
@@ -217,6 +271,32 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       } else {
         View(empty_result)
       }
+    }
+    
+    # Create visualization object if requested (regardless of show_view)
+    plot_obj <- NULL
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, disag, "perc", "single_select")
+      plot_obj <- create_visualization(empty_result, "perc", plot_title, max_categories,
+                                     color_primary = "#730202", color_secondary = "#f27304",
+                                     chart_type = chart_type, max_label_length = max_label_length, font_sizes = font_sizes)
+    }
+    
+    # Display plot if requested and show_view is TRUE
+    if(create_plot && show_view && !is.null(plot_obj)) {
+      print(plot_obj)
+    }
+    
+    # Return appropriate objects based on what was requested
+    if(dt_table || create_plot || wide_format) {
+      return_list <- list(table = empty_result)
+      if(dt_table && !is.null(dt_table_obj)) {
+        return_list$dt_table <- dt_table_obj
+      }
+      if(create_plot && !is.null(plot_obj)) {
+        return_list$plot <- plot_obj
+      }
+      return(return_list)
     }
     
     return(empty_result)
