@@ -28,7 +28,7 @@
 #'                                   disag = "region")
 #' print(mean_age_by_region)
 #' @export
-analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12) {
+analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -83,7 +83,7 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "mean", "stat")
       plot_obj <- create_visualization(result, "mean", plot_title, max_categories,
-                                     original_data = df, ques = ques, disag = "all", max_label_length = max_label_length)
+                                     original_data = df, ques = ques, disag = "all", max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -180,7 +180,7 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "mean", "stat")
       plot_obj <- create_visualization(combined_result, "mean", plot_title, max_categories,
-                                     original_data = df, ques = ques, disag = disag, max_label_length = max_label_length)
+                                     original_data = df, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))
@@ -224,7 +224,7 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
 #'                                       disag = "region")
 #' print(median_age_by_region)
 #' @export
-analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12) {
+analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -279,7 +279,7 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "median", "stat")
       plot_obj <- create_visualization(result, "median", plot_title, max_categories,
-                                     original_data = df, ques = ques, disag = "all", max_label_length = max_label_length)
+                                     original_data = df, ques = ques, disag = "all", max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -376,7 +376,7 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "median", "stat")
       plot_obj <- create_visualization(combined_result, "median", plot_title, max_categories,
-                                     original_data = df, ques = ques, disag = disag, max_label_length = max_label_length)
+                                     original_data = df, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))
@@ -424,7 +424,7 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
 #'                             disag = "region")
 #' print(sum_by_region)
 #' @export
-analyze_sum <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12) {
+analyze_sum <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -478,7 +478,7 @@ analyze_sum <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "sum", "stat")
-      plot_obj <- create_visualization(result, "sum", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(result, "sum", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -574,7 +574,7 @@ analyze_sum <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "sum", "stat")
-      plot_obj <- create_visualization(combined_result, "sum", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(combined_result, "sum", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))
@@ -622,7 +622,7 @@ analyze_sum <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
 #'                                        disag = "region")
 #' print(q1_by_region)
 #' @export
-analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12) {
+analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -676,7 +676,7 @@ analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "1stq", "stat")
-      plot_obj <- create_visualization(result, "1stq", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(result, "1stq", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -772,7 +772,7 @@ analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "1stq", "stat")
-      plot_obj <- create_visualization(combined_result, "1stq", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(combined_result, "1stq", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))
@@ -819,7 +819,7 @@ analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
 #'                                        disag = "region")
 #' print(q3_by_region)
 #' @export
-analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12) {
+analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -873,7 +873,7 @@ analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "3rdq", "stat")
-      plot_obj <- create_visualization(result, "3rdq", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(result, "3rdq", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -969,7 +969,7 @@ analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "3rdq", "stat")
-      plot_obj <- create_visualization(combined_result, "3rdq", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(combined_result, "3rdq", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))
@@ -1017,7 +1017,7 @@ analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
 #'                             disag = "region")
 #' print(min_by_region)
 #' @export
-analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12) {
+analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -1071,7 +1071,7 @@ analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "min", "stat")
-      plot_obj <- create_visualization(result, "min", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(result, "min", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -1167,7 +1167,7 @@ analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "min", "stat")
-      plot_obj <- create_visualization(combined_result, "min", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(combined_result, "min", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))
@@ -1214,7 +1214,7 @@ analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
 #'                             disag = "region")
 #' print(max_by_region)
 #' @export
-analyze_max <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12) {
+analyze_max <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -1268,7 +1268,7 @@ analyze_max <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "max", "stat")
-      plot_obj <- create_visualization(result, "max", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(result, "max", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -1364,7 +1364,7 @@ analyze_max <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "max", "stat")
-      plot_obj <- create_visualization(combined_result, "max", plot_title, max_categories, max_label_length = max_label_length)
+      plot_obj <- create_visualization(combined_result, "max", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))

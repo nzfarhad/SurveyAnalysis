@@ -30,7 +30,7 @@
 #' print(gender_by_region)
 #'
 #' @export
-analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, chart_type = "column", max_label_length = 12) {
+analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE, wide_format = FALSE, dt_table = FALSE, create_plot = FALSE, max_categories = 10, chart_type = "column", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # If no disaggregation variable provided, do overall analysis
   if(is.null(disag)) {
@@ -89,7 +89,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       plot_title <- create_analysis_title(ques, "all", "perc", "single_select")
       plot_obj <- create_visualization(result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
-                                     chart_type = chart_type, max_label_length = max_label_length)
+                                     chart_type = chart_type, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = result, plot = plot_obj))
@@ -187,7 +187,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       plot_title <- create_analysis_title(ques, disag, "perc", "single_select")
       plot_obj <- create_visualization(combined_result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
-                                     chart_type = chart_type, max_label_length = max_label_length)
+                                     chart_type = chart_type, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))

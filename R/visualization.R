@@ -14,6 +14,7 @@
 #' @param disag Optional disaggregation variable name for box plots
 #' @param chart_type Chart type ("auto", "column", "bar", "pie") (default: "auto")
 #' @param max_label_length Maximum length for truncated labels (default: 12)
+#' @param font_sizes List containing font sizes for plot elements (default: list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10))
 #'
 #' @return A ggplot2 object or NULL if no visualization is appropriate
 #'
@@ -34,7 +35,8 @@
 #' @export
 create_visualization <- function(data, analysis_type, title, max_categories = 10, 
                                 color_primary = "#730202", color_secondary = "#f27304",
-                                original_data = NULL, ques = NULL, disag = NULL, chart_type = "auto", max_label_length = 12) {
+                                original_data = NULL, ques = NULL, disag = NULL, chart_type = "auto", max_label_length = 12,
+                                font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # Check if ggplot2 is available
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -57,20 +59,20 @@ create_visualization <- function(data, analysis_type, title, max_categories = 10
   # Handle different analysis types
   if (analysis_type %in% c("perc", "proportion", "percentage")) {
     return(create_percentage_visualization(data, title, max_categories, 
-                                         color_primary, color_secondary, is_disaggregated, chart_type, max_label_length))
+                                         color_primary, color_secondary, is_disaggregated, chart_type, max_label_length, font_sizes))
   } else if (analysis_type %in% c("mean", "median")) {
     # For mean and median, try to create box plots if original data is available
     if (!is.null(original_data) && !is.null(ques)) {
       return(create_box_plot(original_data, ques, disag, analysis_type, title, 
-                           color_primary, color_secondary))
+                           color_primary, color_secondary, font_sizes))
     } else {
       # Fall back to regular statistical charts
       return(create_statistical_visualization(data, analysis_type, title, max_categories,
-                                            color_primary, color_secondary, is_disaggregated))
+                                            color_primary, color_secondary, is_disaggregated, font_sizes))
     }
   } else if (analysis_type %in% c("sum", "min", "max", "1stq", "3rdq")) {
     return(create_statistical_visualization(data, analysis_type, title, max_categories,
-                                          color_primary, color_secondary, is_disaggregated))
+                                          color_primary, color_secondary, is_disaggregated, font_sizes))
   } else {
     warning(paste("Visualization not implemented for analysis type:", analysis_type))
     return(NULL)
@@ -92,7 +94,7 @@ create_visualization <- function(data, analysis_type, title, max_categories = 10
 #'
 #' @export
 create_percentage_visualization <- function(data, title, max_categories, 
-                                          color_primary, color_secondary, is_disaggregated, chart_type = "auto", max_label_length = 12) {
+                                          color_primary, color_secondary, is_disaggregated, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # Check if we have percentage data
   perc_cols <- names(data)[grepl("Percentage|perc", names(data), ignore.case = TRUE)]
@@ -103,10 +105,10 @@ create_percentage_visualization <- function(data, title, max_categories,
   
   if (is_disaggregated) {
     return(create_disaggregated_percentage_chart(data, title, max_categories, 
-                                               color_primary, color_secondary, chart_type, max_label_length))
+                                               color_primary, color_secondary, chart_type, max_label_length, font_sizes))
   } else {
     return(create_simple_percentage_chart(data, title, max_categories, 
-                                        color_primary, color_secondary, chart_type, max_label_length))
+                                        color_primary, color_secondary, chart_type, max_label_length, font_sizes))
   }
 }
 
@@ -122,7 +124,7 @@ create_percentage_visualization <- function(data, title, max_categories,
 #'
 #' @export
 create_simple_percentage_chart <- function(data, title, max_categories, 
-                                         color_primary, color_secondary, chart_type = "auto", max_label_length = 12) {
+                                         color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # Find the percentage column
   perc_col <- names(data)[grepl("Percentage|perc", names(data), ignore.case = TRUE)][1]
@@ -133,11 +135,11 @@ create_simple_percentage_chart <- function(data, title, max_categories,
     return(NULL)
   }
   
+  # Convert percentage strings to numeric for visualization
+  data <- convert_percentage_to_numeric(data, perc_col)
+  
   # Remove percentage signs for numeric operations
   data_for_plot <- data
-  if(perc_col %in% names(data_for_plot)) {
-    data_for_plot[[perc_col]] <- as.numeric(gsub("%", "", data_for_plot[[perc_col]]))
-  }
   
   # Sort data by percentage (largest to smallest) for better visualization
   data_for_plot <- data_for_plot[order(data_for_plot[[perc_col]], decreasing = TRUE), ]
@@ -171,7 +173,7 @@ create_simple_percentage_chart <- function(data, title, max_categories,
       ggplot2::coord_polar(theta = "y") +
       ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%', '\\n', ", response_col, ")")), 
                         position = ggplot2::position_stack(vjust = 0.5), 
-                        size = 3.5, fontface = "bold") +
+                        size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         fill = "Response"
@@ -179,9 +181,9 @@ create_simple_percentage_chart <- function(data, title, max_categories,
       ggplot2::scale_fill_manual(values = colors) +
       ggplot2::theme_void() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
-        legend.title = ggplot2::element_text(size = 11, face = "bold"),
-        legend.text = ggplot2::element_text(size = 10),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
+        legend.title = ggplot2::element_text(size = font_sizes$legend_title, face = "bold"),
+        legend.text = ggplot2::element_text(size = font_sizes$legend_text),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
       ggplot2::guides(fill = ggplot2::guide_legend(ncol = 1))
@@ -192,7 +194,7 @@ create_simple_percentage_chart <- function(data, title, max_categories,
     p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = perc_col, y = response_col)) +
       ggplot2::geom_col(fill = colors, color = "white", size = 0.5) +
       ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%')")), 
-                        hjust = -0.1, size = 3.5, fontface = "bold") +
+                        hjust = -0.1, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "Percentage (%)",
@@ -200,10 +202,10 @@ create_simple_percentage_chart <- function(data, title, max_categories,
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         axis.text.x = ggplot2::element_text(size = 10),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
         panel.grid.major.y = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -215,7 +217,7 @@ create_simple_percentage_chart <- function(data, title, max_categories,
     p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = response_col, y = perc_col)) +
       ggplot2::geom_col(fill = colors, color = "white", size = 0.5) +
       ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%')")), 
-                        vjust = -0.5, size = 3.5, fontface = "bold") +
+                        vjust = -0.5, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "Response",
@@ -223,10 +225,10 @@ create_simple_percentage_chart <- function(data, title, max_categories,
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         axis.text.x = ggplot2::element_text(angle = 60, hjust = 1, size = 9, vjust = 1),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -249,17 +251,17 @@ create_simple_percentage_chart <- function(data, title, max_categories,
 #'
 #' @export
 create_disaggregated_percentage_chart <- function(data, title, max_categories, 
-                                                color_primary, color_secondary, chart_type = "auto", max_label_length = 12) {
+                                                color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # Check if this is wide format data
   is_wide_format <- any(grepl("_", names(data)))
   
   if (is_wide_format) {
     return(create_wide_format_percentage_chart(data, title, max_categories, 
-                                             color_primary, color_secondary, chart_type, max_label_length))
+                                             color_primary, color_secondary, chart_type, max_label_length, font_sizes))
   } else {
     return(create_long_format_percentage_chart(data, title, max_categories, 
-                                             color_primary, color_secondary, chart_type, max_label_length))
+                                             color_primary, color_secondary, chart_type, max_label_length, font_sizes))
   }
 }
 
@@ -275,7 +277,7 @@ create_disaggregated_percentage_chart <- function(data, title, max_categories,
 #'
 #' @export
 create_wide_format_percentage_chart <- function(data, title, max_categories, 
-                                              color_primary, color_secondary, chart_type = "auto", max_label_length = 12) {
+                                              color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # Extract percentage columns
   perc_cols <- names(data)[grepl("Percentage_", names(data))]
@@ -286,6 +288,14 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
     return(NULL)
   }
   
+  # Convert percentage strings to numeric for visualization
+  for (col in perc_cols) {
+    data <- convert_percentage_to_numeric(data, col)
+  }
+  
+  # Truncate long labels for better visualization
+  data[[response_col]] <- truncate_labels(data[[response_col]], max_label_length)
+  
   # Remove percentage signs for numeric operations
   plot_data <- data.frame()
   
@@ -293,7 +303,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
     level_name <- gsub("Percentage_", "", col)
     temp_data <- data.frame(
       Response = data[[response_col]],
-      Percentage = as.numeric(gsub("%", "", data[[col]])),
+      Percentage = data[[col]],  # Already converted to numeric by helper function
       Level = level_name,
       stringsAsFactors = FALSE
     )
@@ -342,7 +352,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::geom_col(position = "dodge", color = "white", size = 0.5) +
       ggplot2::geom_text(ggplot2::aes(label = paste0(Percentage, "%")), 
                         position = ggplot2::position_dodge(width = 0.9), 
-                        hjust = -0.1, size = 3.5, fontface = "bold") +
+                        hjust = -0.1, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "Percentage (%)",
@@ -352,12 +362,12 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::scale_fill_manual(values = create_color_palette(n_levels, color_primary, color_secondary)) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         axis.text.x = ggplot2::element_text(size = 10),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
-        legend.title = ggplot2::element_text(size = 11, face = "bold"),
-        legend.text = ggplot2::element_text(size = 10),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
+        legend.title = ggplot2::element_text(size = font_sizes$legend_title, face = "bold"),
+        legend.text = ggplot2::element_text(size = font_sizes$legend_text),
         panel.grid.major.y = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -370,7 +380,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::geom_col(position = "dodge", color = "white", size = 0.5) +
       ggplot2::geom_text(ggplot2::aes(label = paste0(Percentage, "%")), 
                         position = ggplot2::position_dodge(width = 0.9), 
-                        vjust = -0.5, size = 3.5, fontface = "bold") +
+                        vjust = -0.5, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "Response",
@@ -380,12 +390,12 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::scale_fill_manual(values = create_color_palette(n_levels, color_primary, color_secondary)) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         axis.text.x = ggplot2::element_text(angle = 60, hjust = 1, size = 9, vjust = 1),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
-        legend.title = ggplot2::element_text(size = 11, face = "bold"),
-        legend.text = ggplot2::element_text(size = 10),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
+        legend.title = ggplot2::element_text(size = font_sizes$legend_title, face = "bold"),
+        legend.text = ggplot2::element_text(size = font_sizes$legend_text),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -408,7 +418,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
 #'
 #' @export
 create_long_format_percentage_chart <- function(data, title, max_categories, 
-                                              color_primary, color_secondary, chart_type = "auto", max_label_length = 12) {
+                                               color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # Find relevant columns
   perc_col <- names(data)[grepl("Percentage|perc", names(data), ignore.case = TRUE)][1]
@@ -420,11 +430,15 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
     return(NULL)
   }
   
+  # Convert percentage strings to numeric for visualization
+  data <- convert_percentage_to_numeric(data, perc_col)
+  
+  # Truncate long labels for better visualization
+  data[[response_col]] <- truncate_labels(data[[response_col]], max_label_length)
+  data[[level_col]] <- truncate_labels(data[[level_col]], max_label_length)
+  
   # Remove percentage signs for numeric operations
   data_for_plot <- data
-  if(perc_col %in% names(data_for_plot)) {
-    data_for_plot[[perc_col]] <- as.numeric(gsub("%", "", data_for_plot[[perc_col]]))
-  }
   
   # Sort data by percentage (largest to smallest) for better visualization
   # For grouped data, sort by the maximum percentage within each response category
@@ -465,7 +479,7 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::geom_col(position = "dodge", color = "white", size = 0.5) +
       ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%')")), 
                         position = ggplot2::position_dodge(width = 0.9), 
-                        hjust = -0.1, size = 3.5, fontface = "bold") +
+                        hjust = -0.1, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "Percentage (%)",
@@ -475,12 +489,12 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::scale_fill_manual(values = create_color_palette(n_levels, color_primary, color_secondary)) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         axis.text.x = ggplot2::element_text(size = 10),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
-        legend.title = ggplot2::element_text(size = 11, face = "bold"),
-        legend.text = ggplot2::element_text(size = 10),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
+        legend.title = ggplot2::element_text(size = font_sizes$legend_title, face = "bold"),
+        legend.text = ggplot2::element_text(size = font_sizes$legend_text),
         panel.grid.major.y = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -493,7 +507,7 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::geom_col(position = "dodge", color = "white", size = 0.5) +
       ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%')")), 
                         position = ggplot2::position_dodge(width = 0.9), 
-                        vjust = -0.5, size = 3.5, fontface = "bold") +
+                        vjust = -0.5, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "Response",
@@ -503,12 +517,12 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::scale_fill_manual(values = create_color_palette(n_levels, color_primary, color_secondary)) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         axis.text.x = ggplot2::element_text(angle = 60, hjust = 1, size = 9, vjust = 1),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
-        legend.title = ggplot2::element_text(size = 11, face = "bold"),
-        legend.text = ggplot2::element_text(size = 10),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
+        legend.title = ggplot2::element_text(size = font_sizes$legend_title, face = "bold"),
+        legend.text = ggplot2::element_text(size = font_sizes$legend_text),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -532,7 +546,18 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
 #' @return A ggplot2 object
 #'
 #' @export
-create_box_plot <- function(data, ques, disag, analysis_type, title, color_primary, color_secondary) {
+create_box_plot <- function(data, ques, disag, analysis_type, title, color_primary, color_secondary, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
+  
+  # Validate inputs
+  if (is.null(data) || nrow(data) == 0) {
+    warning("No data provided for box plot")
+    return(NULL)
+  }
+  
+  if (!ques %in% names(data)) {
+    warning(paste("Question column", ques, "not found in data"))
+    return(NULL)
+  }
   
   # Check if disaggregation variable exists
   if (!disag %in% names(data) || disag == "all") {
@@ -549,11 +574,11 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         plot.subtitle = ggplot2::element_text(size = 10, hjust = 0.5),
         axis.text.x = ggplot2::element_blank(),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -563,15 +588,44 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
   }
   
   # Multiple box plots for disaggregated data
-  # Create color palette
-  n_levels <- length(unique(data[[disag]]))
-  colors <- create_color_palette(n_levels, color_primary, color_secondary)
+  # Validate disaggregation variable
+  if (!disag %in% names(data)) {
+    warning(paste("Disaggregation variable", disag, "not found in data"))
+    return(NULL)
+  }
+  
+  # Check if there are enough unique values
+  unique_values <- unique(data[[disag]])
+  if (length(unique_values) == 0) {
+    warning("No unique values found in disaggregation variable")
+    return(NULL)
+  }
+  
+  # Limit the number of categories to prevent performance issues
+  if (length(unique_values) > 20) {
+    warning(paste("Too many categories (", length(unique_values), "). Limiting to top 20 by frequency."))
+    # Get top 20 categories by frequency
+    freq_table <- table(data[[disag]])
+    top_categories <- names(sort(freq_table, decreasing = TRUE)[1:20])
+    data <- data[data[[disag]] %in% top_categories, ]
+    unique_values <- unique(data[[disag]])
+  }
+  
+  # Remove rows with missing values in the question column
+  data <- data[!is.na(data[[ques]]), ]
+  
+  # Check if we still have data after filtering
+  if (nrow(data) == 0) {
+    warning("No valid data remaining after filtering")
+    return(NULL)
+  }
   
   # Truncate long labels
   data[[disag]] <- truncate_labels(data[[disag]], 15)
   
-  p <- ggplot2::ggplot(data, ggplot2::aes_string(x = disag, y = ques, fill = disag)) +
-    ggplot2::geom_boxplot(color = "black", size = 0.5, alpha = 0.7) +
+  # Create the plot with explicit fill color to avoid any mapping issues
+  p <- ggplot2::ggplot(data, ggplot2::aes_string(x = disag, y = ques)) +
+    ggplot2::geom_boxplot(fill = color_primary, color = "black", size = 0.5, alpha = 0.7) +
     ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "red", color = "red") +
     ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "blue") +
     ggplot2::labs(
@@ -580,14 +634,13 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
       y = ques,
       subtitle = "Red diamond = Mean, Blue circle = Median"
     ) +
-    ggplot2::scale_fill_manual(values = colors) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+      plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
       plot.subtitle = ggplot2::element_text(size = 10, hjust = 0.5),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
       axis.text.y = ggplot2::element_text(size = 10),
-      axis.title = ggplot2::element_text(size = 12, face = "bold"),
+      axis.title = ggplot2::element_text(size = font_sizes$axis_title),
       legend.position = "none",
       panel.grid.major.x = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
@@ -612,8 +665,8 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
 #' @return A ggplot2 object
 #'
 #' @export
-create_statistical_visualization <- function(data, analysis_type, title, max_categories,
-                                           color_primary, color_secondary, is_disaggregated) {
+create_statistical_visualization <- function(data, analysis_type, title, max_categories, 
+                                           color_primary, color_secondary, is_disaggregated, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # For mean and median, create box plots if we have access to original data
   if (analysis_type %in% c("mean", "median")) {
@@ -644,7 +697,7 @@ create_statistical_visualization <- function(data, analysis_type, title, max_cat
 #'
 #' @export
 create_simple_statistical_chart <- function(data, analysis_type, title, max_categories,
-                                          color_primary, color_secondary) {
+                                          color_primary, color_secondary, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # Find the result column based on analysis type
   result_col <- names(data)[grepl(paste0("^", stringr::str_to_title(analysis_type), "$"), names(data))]
@@ -663,7 +716,7 @@ create_simple_statistical_chart <- function(data, analysis_type, title, max_cate
     p <- ggplot2::ggplot(data, ggplot2::aes_string(x = "1", y = result_col)) +
       ggplot2::geom_col(fill = color_primary, color = "white", size = 0.5) +
       ggplot2::geom_text(ggplot2::aes_string(label = result_col), 
-                        vjust = -0.5, size = 4, fontface = "bold") +
+                        vjust = -0.5, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "",
@@ -671,10 +724,10 @@ create_simple_statistical_chart <- function(data, analysis_type, title, max_cate
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         axis.text.x = ggplot2::element_blank(),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -706,7 +759,7 @@ create_simple_statistical_chart <- function(data, analysis_type, title, max_cate
     p <- ggplot2::ggplot(data, ggplot2::aes_string(x = response_col, y = result_col)) +
       ggplot2::geom_col(fill = colors, color = "white", size = 0.5) +
       ggplot2::geom_text(ggplot2::aes_string(label = result_col), 
-                        vjust = -0.5, size = 3.5, fontface = "bold") +
+                        vjust = -0.5, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "Response",
@@ -714,10 +767,10 @@ create_simple_statistical_chart <- function(data, analysis_type, title, max_cate
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.title = ggplot2::element_text(size = font_sizes$plot_title, face = "bold", hjust = 0.5),
         axis.text.x = ggplot2::element_text(angle = 60, hjust = 1, size = 9, vjust = 1),
         axis.text.y = ggplot2::element_text(size = 10),
-        axis.title = ggplot2::element_text(size = 12, face = "bold"),
+        axis.title = ggplot2::element_text(size = font_sizes$axis_title),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
@@ -911,6 +964,19 @@ create_long_format_statistical_chart <- function(data, analysis_type, title, max
   return(p)
 }
 
+#' Helper function to convert percentage strings to numeric values
+#'
+#' @param data Data frame
+#' @param perc_col Column name containing percentage values
+#' @return Data frame with numeric percentage values
+convert_percentage_to_numeric <- function(data, perc_col) {
+  if (perc_col %in% names(data)) {
+    # Convert percentage strings to numeric
+    data[[perc_col]] <- as.numeric(gsub("%", "", data[[perc_col]]))
+  }
+  return(data)
+}
+
 #' Helper function to truncate long labels
 #'
 #' @param labels Vector of labels to truncate
@@ -920,6 +986,17 @@ create_long_format_statistical_chart <- function(data, analysis_type, title, max
 #'
 #' @export
 truncate_labels <- function(labels, max_length = 15) {
+  # Validate inputs
+  if (is.null(labels) || length(labels) == 0) {
+    return(character(0))
+  }
+  
+  # Convert to character if not already
+  labels <- as.character(labels)
+  
+  # Handle NA values
+  labels[is.na(labels)] <- "NA"
+  
   result <- sapply(labels, function(label) {
     if (is.character(label) && nchar(label) > max_length) {
       paste0(substr(label, 1, max_length - 3), "...")
