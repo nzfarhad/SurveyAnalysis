@@ -168,10 +168,10 @@ create_simple_percentage_chart <- function(data, title, max_categories,
   # Determine chart type based on user preference or automatic selection
   if (chart_type == "pie" || (chart_type == "auto" && n_categories < 5)) {
     # Create pie chart
-    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = "1", y = perc_col, fill = response_col)) +
+    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes(x = 1, y = !!ggplot2::sym(perc_col), fill = !!ggplot2::sym(response_col))) +
       ggplot2::geom_col(width = 1) +
       ggplot2::coord_polar(theta = "y") +
-      ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%', '\\n', ", response_col, ")")), 
+      ggplot2::geom_text(ggplot2::aes(label = paste0(!!ggplot2::sym(perc_col), "%", "\n", !!ggplot2::sym(response_col))), 
                         position = ggplot2::position_stack(vjust = 0.5), 
                         size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
@@ -588,49 +588,42 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
   }
   
   # Multiple box plots for disaggregated data
-  # Validate disaggregation variable
-  if (!disag %in% names(data)) {
-    warning(paste("Disaggregation variable", disag, "not found in data"))
+  # Clean data - remove NA values
+  clean_data <- data[!is.na(data[[ques]]) & !is.na(data[[disag]]), ]
+  
+  if (nrow(clean_data) == 0) {
+    warning("No valid data remaining after removing NA values")
     return(NULL)
   }
   
-  # Check if there are enough unique values
-  unique_values <- unique(data[[disag]])
-  if (length(unique_values) == 0) {
-    warning("No unique values found in disaggregation variable")
+  # Check unique values in disaggregation variable
+  unique_levels <- unique(clean_data[[disag]])
+  if (length(unique_levels) == 0) {
+    warning("No unique levels found in disaggregation variable")
     return(NULL)
   }
   
-  # Limit the number of categories to prevent performance issues
-  if (length(unique_values) > 20) {
-    warning(paste("Too many categories (", length(unique_values), "). Limiting to top 20 by frequency."))
-    # Get top 20 categories by frequency
-    freq_table <- table(data[[disag]])
+  # Limit categories if too many
+  if (length(unique_levels) > 20) {
+    warning(paste("Too many categories (", length(unique_levels), ") in disaggregation variable '", disag, "'. Limiting to top 20 by frequency."))
+    freq_table <- table(clean_data[[disag]])
     top_categories <- names(sort(freq_table, decreasing = TRUE)[1:20])
-    data <- data[data[[disag]] %in% top_categories, ]
-    unique_values <- unique(data[[disag]])
+    clean_data <- clean_data[clean_data[[disag]] %in% top_categories, ]
+    unique_levels <- unique(clean_data[[disag]])
+    title <- paste0(title, " (Top 20 Categories)")
   }
   
-  # Remove rows with missing values in the question column
-  data <- data[!is.na(data[[ques]]), ]
+  # Convert disaggregation variable to factor for proper ordering
+  clean_data[[disag]] <- as.factor(clean_data[[disag]])
   
-  # Check if we still have data after filtering
-  if (nrow(data) == 0) {
-    warning("No valid data remaining after filtering")
-    return(NULL)
-  }
-  
-  # Truncate long labels
-  data[[disag]] <- truncate_labels(data[[disag]], 15)
-  
-  # Create the plot with explicit fill color to avoid any mapping issues
-  p <- ggplot2::ggplot(data, ggplot2::aes_string(x = disag, y = ques)) +
+  # Create the boxplot using a simple, direct approach
+  p <- ggplot2::ggplot(clean_data, ggplot2::aes_string(x = disag, y = ques)) +
     ggplot2::geom_boxplot(fill = color_primary, color = "black", size = 0.5, alpha = 0.7) +
     ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "red", color = "red") +
     ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "blue") +
     ggplot2::labs(
       title = title,
-      x = "Disaggregation Level",
+      x = disag,
       y = ques,
       subtitle = "Red diamond = Mean, Blue circle = Median"
     ) +

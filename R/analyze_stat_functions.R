@@ -179,8 +179,11 @@ analyze_mean <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "mean", "stat")
+      # Filter original data to only include the levels that were actually analyzed
+      analyzed_levels <- unique(combined_result[[disag]])
+      filtered_data <- df[df[[disag]] %in% analyzed_levels & !is.na(df[[disag]]), ]
       plot_obj <- create_visualization(combined_result, "mean", plot_title, max_categories,
-                                     original_data = df, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
+                                     original_data = filtered_data, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))
@@ -375,8 +378,11 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
     # Create visualization if requested
     if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "median", "stat")
+      # Filter original data to only include the levels that were actually analyzed
+      analyzed_levels <- unique(combined_result[[disag]])
+      filtered_data <- df[df[[disag]] %in% analyzed_levels & !is.na(df[[disag]]), ]
       plot_obj <- create_visualization(combined_result, "median", plot_title, max_categories,
-                                     original_data = df, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
+                                     original_data = filtered_data, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
         print(plot_obj)
         return(list(table = combined_result, plot = plot_obj))
