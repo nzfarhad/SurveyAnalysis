@@ -52,9 +52,8 @@ create_visualization <- function(data, analysis_type, title, max_categories = 10
   
   # Determine if this is disaggregated data
   # Check for wide format (columns with underscores) or explicit disaggregation columns
-  is_disaggregated <- any(grepl("_[A-Za-z]", names(data))) || 
-                     any(grepl("DisaggLevel|Level|Region|Province", names(data), ignore.case = TRUE)) ||
-                     (any(grepl("Percentage_|Mean_|Median_|Sum_|Min_|Max_", names(data))))
+  is_disaggregated <- any(grepl("Percentage_|Mean_|Median_|Sum_|Min_|Max_|FirstQuartile_|ThirdQuartile_", names(data))) || 
+                     any(grepl("DisaggLevel|Level|Region|Province", names(data), ignore.case = TRUE))
   
   # Handle different analysis types
   if (analysis_type %in% c("perc", "proportion", "percentage")) {
@@ -191,9 +190,9 @@ create_simple_percentage_chart <- function(data, title, max_categories,
     return(p)
   } else if (chart_type == "bar" || (chart_type == "auto" && n_categories > 10)) {
     # Create horizontal bar chart
-    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = perc_col, y = response_col)) +
-      ggplot2::geom_col(fill = colors, color = "white", size = 0.5) +
-      ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%')")), 
+    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes(x = !!ggplot2::sym(perc_col), y = !!ggplot2::sym(response_col))) +
+      ggplot2::geom_col(fill = colors, color = "white", linewidth = 0.5) +
+      ggplot2::geom_text(ggplot2::aes(label = paste0(!!ggplot2::sym(perc_col), "%")), 
                         hjust = -0.1, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
@@ -214,9 +213,9 @@ create_simple_percentage_chart <- function(data, title, max_categories,
       ggplot2::scale_y_discrete(limits = rev)
   } else {
     # Create vertical column chart (default)
-    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = response_col, y = perc_col)) +
-      ggplot2::geom_col(fill = colors, color = "white", size = 0.5) +
-      ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%')")), 
+    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes(x = !!ggplot2::sym(response_col), y = !!ggplot2::sym(perc_col))) +
+      ggplot2::geom_col(fill = colors, color = "white", linewidth = 0.5) +
+      ggplot2::geom_text(ggplot2::aes(label = paste0(!!ggplot2::sym(perc_col), "%")), 
                         vjust = -0.5, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
         title = title,
@@ -233,7 +232,7 @@ create_simple_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_y_continuous(limits = c(100, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
+      ggplot2::scale_y_continuous(limits = c(0, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
   }
   
   return(p)
@@ -254,7 +253,9 @@ create_disaggregated_percentage_chart <- function(data, title, max_categories,
                                                 color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
   
   # Check if this is wide format data
-  is_wide_format <- any(grepl("_", names(data)))
+  # Wide format has columns like "Percentage_Kunar", "Percentage_Laghman", etc.
+  # Long format has columns like "Response", "Percentage", "Province"
+  is_wide_format <- any(grepl("Percentage_|Mean_|Median_|Sum_|Min_|Max_|FirstQuartile_|ThirdQuartile_", names(data)))
   
   if (is_wide_format) {
     return(create_wide_format_percentage_chart(data, title, max_categories, 
@@ -349,7 +350,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
   if (chart_type == "bar" || (chart_type == "auto" && n_responses > 10)) {
     # Create horizontal grouped bar chart
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Percentage, y = Response, fill = Level)) +
-      ggplot2::geom_col(position = "dodge", color = "white", size = 0.5) +
+      ggplot2::geom_col(position = "dodge", color = "white", linewidth = 0.5) +
       ggplot2::geom_text(ggplot2::aes(label = paste0(Percentage, "%")), 
                         position = ggplot2::position_dodge(width = 0.9), 
                         hjust = -0.1, size = font_sizes$geom_text, fontface = "bold") +
@@ -377,7 +378,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
   } else {
     # Create vertical grouped column chart (default)
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Response, y = Percentage, fill = Level)) +
-      ggplot2::geom_col(position = "dodge", color = "white", size = 0.5) +
+      ggplot2::geom_col(position = "dodge", color = "white", linewidth = 0.5) +
       ggplot2::geom_text(ggplot2::aes(label = paste0(Percentage, "%")), 
                         position = ggplot2::position_dodge(width = 0.9), 
                         vjust = -0.5, size = font_sizes$geom_text, fontface = "bold") +
@@ -400,7 +401,7 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_y_continuous(limits = c(100, max(plot_data$Percentage, na.rm = TRUE) * 1.1))
+      ggplot2::scale_y_continuous(limits = c(0, max(plot_data$Percentage, na.rm = TRUE) * 1.1))
   }
   
   return(p)
@@ -434,8 +435,24 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
   data <- convert_percentage_to_numeric(data, perc_col)
   
   # Truncate long labels for better visualization
-  data[[response_col]] <- truncate_labels(data[[response_col]], max_label_length)
-  data[[level_col]] <- truncate_labels(data[[level_col]], max_label_length)
+  # For disaggregated data, we need to be careful not to create duplicates in response labels
+  # Only truncate if the labels are actually too long, and don't make them unique
+  # Convert to character first to avoid nchar() errors with factors
+  data[[response_col]] <- as.character(data[[response_col]])
+  if (any(nchar(data[[response_col]]) > max_label_length)) {
+    data[[response_col]] <- sapply(data[[response_col]], function(label) {
+      if (nchar(label) > max_label_length) {
+        paste0(substr(label, 1, max_label_length - 3), "...")
+      } else {
+        label
+      }
+    })
+  }
+  # Don't truncate level column (province names) as they're usually short and truncation causes legend duplicates
+  # Only truncate if they're extremely long (more than 25 characters)
+  if (any(nchar(as.character(data[[level_col]])) > 25)) {
+    data[[level_col]] <- truncate_labels(data[[level_col]], 25)
+  }
   
   # Remove percentage signs for numeric operations
   data_for_plot <- data
@@ -462,6 +479,13 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
     levels = unique_levels
   )
   
+  # Ensure level column is properly handled as factor for consistent grouping
+  unique_level_values <- unique(data_for_plot[[level_col]])
+  data_for_plot[[level_col]] <- factor(
+    data_for_plot[[level_col]],
+    levels = unique_level_values
+  )
+  
   # Create color palette
   n_levels <- length(unique(data_for_plot[[level_col]]))
   n_responses <- length(unique(data_for_plot[[response_col]]))
@@ -475,9 +499,9 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
   
   if (chart_type == "bar" || (chart_type == "auto" && n_responses > 10)) {
     # Create horizontal grouped bar chart
-    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = perc_col, y = response_col, fill = level_col)) +
-      ggplot2::geom_col(position = "dodge", color = "white", size = 0.5) +
-      ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%')")), 
+    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes(x = !!ggplot2::sym(perc_col), y = !!ggplot2::sym(response_col), fill = !!ggplot2::sym(level_col))) +
+      ggplot2::geom_col(position = "dodge", color = "white", linewidth = 0.5) +
+      ggplot2::geom_text(ggplot2::aes(label = paste0(!!ggplot2::sym(perc_col), "%")), 
                         position = ggplot2::position_dodge(width = 0.9), 
                         hjust = -0.1, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
@@ -503,9 +527,9 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
       ggplot2::scale_y_discrete(limits = rev)
   } else {
     # Create vertical grouped column chart (default)
-    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes_string(x = response_col, y = perc_col, fill = level_col)) +
-      ggplot2::geom_col(position = "dodge", color = "white", size = 0.5) +
-      ggplot2::geom_text(ggplot2::aes_string(label = paste0("paste(", perc_col, ", '%')")), 
+    p <- ggplot2::ggplot(data_for_plot, ggplot2::aes(x = !!ggplot2::sym(response_col), y = !!ggplot2::sym(perc_col), fill = !!ggplot2::sym(level_col))) +
+      ggplot2::geom_col(position = "dodge", color = "white", linewidth = 0.5) +
+      ggplot2::geom_text(ggplot2::aes(label = paste0(!!ggplot2::sym(perc_col), "%")), 
                         position = ggplot2::position_dodge(width = 0.9), 
                         vjust = -0.5, size = font_sizes$geom_text, fontface = "bold") +
       ggplot2::labs(
@@ -527,7 +551,7 @@ create_long_format_percentage_chart <- function(data, title, max_categories,
         panel.grid.minor = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(20, 20, 20, 20)
       ) +
-      ggplot2::scale_y_continuous(limits = c(100, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
+      ggplot2::scale_y_continuous(limits = c(0, max(data_for_plot[[perc_col]], na.rm = TRUE) * 1.1))
   }
   
   return(p)
