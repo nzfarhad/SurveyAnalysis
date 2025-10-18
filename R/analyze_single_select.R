@@ -52,7 +52,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       if(dt_table) {
         # Create DT table with search and download options
         filename <- paste0("single_select_", ques)
-        dt_table_obj <- create_dt_table(result, title, filename)
+        create_dt_table(result, title, filename)
       } else {
         # Use basic HTML table
         if(requireNamespace("htmltools", quietly = TRUE)) {
@@ -67,7 +67,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
                 )
               ),
               htmltools::tags$tbody(
-                lapply(1:nrow(result), function(i) {
+                lapply(seq_len(nrow(result)), function(i) {
                   htmltools::tags$tr(
                     lapply(result[i, ], function(cell) {
                       htmltools::tags$td(as.character(cell))
@@ -84,8 +84,8 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, "all", "perc", "single_select")
       plot_obj <- create_visualization(result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
@@ -150,7 +150,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       if(dt_table) {
         # Create DT table with search and download options
         filename <- paste0("single_select_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
-        dt_table_obj <- create_dt_table(combined_result, title, filename)
+        create_dt_table(combined_result, title, filename)
       } else {
         # Use basic HTML table
         if(requireNamespace("htmltools", quietly = TRUE)) {
@@ -165,7 +165,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
                 )
               ),
               htmltools::tags$tbody(
-                lapply(1:nrow(combined_result), function(i) {
+                lapply(seq_len(nrow(combined_result)), function(i) {
                   htmltools::tags$tr(
                     lapply(combined_result[i, ], function(cell) {
                       htmltools::tags$td(as.character(cell))
@@ -182,8 +182,8 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, disag, "perc", "single_select")
       plot_obj <- create_visualization(combined_result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",

@@ -80,8 +80,8 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, "all", "median", "stat")
       plot_obj <- create_visualization(result, "median", plot_title, max_categories,
                                      original_data = df, ques = ques, disag = "all", max_label_length = max_label_length, font_sizes = font_sizes)
@@ -180,8 +180,8 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, disag, "median", "stat")
       # Filter original data to only include the levels that were actually analyzed
       # Use the original combined_result before wide format reshaping for plotting

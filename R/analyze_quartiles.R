@@ -82,8 +82,8 @@ analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, "all", "1stq", "stat")
       plot_obj <- create_visualization(result, "1stq", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
@@ -178,8 +178,8 @@ analyze_first_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, disag, "1stq", "stat")
       plot_obj <- create_visualization(combined_result, "1stq", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
@@ -280,8 +280,8 @@ analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, "all", "3rdq", "stat")
       plot_obj <- create_visualization(result, "3rdq", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
@@ -376,8 +376,8 @@ analyze_third_quartile <- function(df, ques, disag = NULL, level = NULL, show_vi
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, disag, "3rdq", "stat")
       plot_obj <- create_visualization(combined_result, "3rdq", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {

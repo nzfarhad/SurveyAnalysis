@@ -82,8 +82,8 @@ analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, "all", "min", "stat")
       plot_obj <- create_visualization(result, "min", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
@@ -178,8 +178,8 @@ analyze_min <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, disag, "min", "stat")
       plot_obj <- create_visualization(combined_result, "min", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
@@ -280,8 +280,8 @@ analyze_max <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, "all", "max", "stat")
       plot_obj <- create_visualization(result, "max", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
@@ -376,8 +376,8 @@ analyze_max <- function(df, ques, disag = NULL, level = NULL, show_view = FALSE,
       }
     }
     
-    # Create visualization if requested
-    if(create_plot) {
+    # Create visualization if requested and show_view is TRUE
+    if(create_plot && show_view) {
       plot_title <- create_analysis_title(ques, disag, "max", "stat")
       plot_obj <- create_visualization(combined_result, "max", plot_title, max_categories, max_label_length = max_label_length, font_sizes = font_sizes)
       if(!is.null(plot_obj)) {
