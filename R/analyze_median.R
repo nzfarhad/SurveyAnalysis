@@ -40,15 +40,24 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       warning("Wide format not applicable for non-disaggregated analysis")
     }
     
+    # Create DT table object if requested (regardless of show_view)
+    dt_table_obj <- NULL
+    if(dt_table) {
+      title <- create_analysis_title(ques, "all", "median", "stat")
+      filename <- paste0("median_", ques)
+      dt_table_obj <- create_dt_table(result, title, filename, display = show_view)
+    }
+    
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
       # Create descriptive title
       title <- create_analysis_title(ques, "all", "median", "stat")
       
       if(dt_table) {
-        # Create DT table with search and download options
-        filename <- paste0("median_", ques)
-        create_dt_table(result, title, filename)
+        # DT table already created above, just display it
+        if(!is.null(dt_table_obj)) {
+          print(dt_table_obj)
+        }
       } else {
         # Use basic HTML table
         if(requireNamespace("htmltools", quietly = TRUE)) {
@@ -80,15 +89,29 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       }
     }
     
-    # Create visualization if requested and show_view is TRUE
-    if(create_plot && show_view) {
+    # Create visualization object if requested (regardless of show_view)
+    plot_obj <- NULL
+    if(create_plot) {
       plot_title <- create_analysis_title(ques, "all", "median", "stat")
       plot_obj <- create_visualization(result, "median", plot_title, max_categories,
                                      original_data = df, ques = ques, disag = "all", max_label_length = max_label_length, font_sizes = font_sizes)
-      if(!is.null(plot_obj)) {
-        print(plot_obj)
-        return(list(table = result, plot = plot_obj))
+    }
+    
+    # Display plot if requested and show_view is TRUE
+    if(create_plot && show_view && !is.null(plot_obj)) {
+      print(plot_obj)
+    }
+    
+    # Return appropriate objects based on what was requested
+    if(dt_table || create_plot) {
+      return_list <- list(table = result)
+      if(dt_table && !is.null(dt_table_obj)) {
+        return_list$dt_table <- dt_table_obj
       }
+      if(create_plot && !is.null(plot_obj)) {
+        return_list$plot <- plot_obj
+      }
+      return(return_list)
     }
     
     return(result)
@@ -140,15 +163,24 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       combined_result <- reshape_to_wide(combined_result, "median", disag)
     }
     
+    # Create DT table object if requested (regardless of show_view)
+    dt_table_obj <- NULL
+    if(dt_table) {
+      title <- create_analysis_title(ques, disag, "median", "stat")
+      filename <- paste0("median_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+      dt_table_obj <- create_dt_table(combined_result, title, filename, display = show_view)
+    }
+    
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
       # Create descriptive title
       title <- create_analysis_title(ques, disag, "median", "stat")
       
       if(dt_table) {
-        # Create DT table with search and download options
-        filename <- paste0("median_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
-        create_dt_table(combined_result, title, filename)
+        # DT table already created above, just display it
+        if(!is.null(dt_table_obj)) {
+          print(dt_table_obj)
+        }
       } else {
         # Use basic HTML table
         if(requireNamespace("htmltools", quietly = TRUE)) {
@@ -180,8 +212,9 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       }
     }
     
-    # Create visualization if requested and show_view is TRUE
-    if(create_plot && show_view) {
+    # Create visualization object if requested (regardless of show_view)
+    plot_obj <- NULL
+    if(create_plot) {
       plot_title <- create_analysis_title(ques, disag, "median", "stat")
       # Filter original data to only include the levels that were actually analyzed
       # Use the original combined_result before wide format reshaping for plotting
@@ -191,10 +224,23 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       # For plotting, always use the original data structure, not the wide format
       plot_obj <- create_visualization(original_result_for_plot, "median", plot_title, max_categories,
                                      original_data = filtered_data, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
-      if(!is.null(plot_obj)) {
-        print(plot_obj)
-        return(list(table = combined_result, plot = plot_obj))
+    }
+    
+    # Display plot if requested and show_view is TRUE
+    if(create_plot && show_view && !is.null(plot_obj)) {
+      print(plot_obj)
+    }
+    
+    # Return appropriate objects based on what was requested
+    if(dt_table || create_plot) {
+      return_list <- list(table = combined_result)
+      if(dt_table && !is.null(dt_table_obj)) {
+        return_list$dt_table <- dt_table_obj
       }
+      if(create_plot && !is.null(plot_obj)) {
+        return_list$plot <- plot_obj
+      }
+      return(return_list)
     }
     
     return(combined_result)
@@ -207,6 +253,22 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       Valid = integer(0),
       stringsAsFactors = FALSE
     )
+    
+    # Create DT table object if requested (regardless of show_view)
+    dt_table_obj <- NULL
+    if(dt_table) {
+      title <- create_analysis_title(ques, disag, "median", "stat")
+      filename <- paste0("median_", ques, ifelse(!is.null(disag) && disag != "all", paste0("_by_", disag), ""))
+      dt_table_obj <- create_dt_table(empty_result, title, filename, display = show_view)
+    }
+    
+    # Create visualization object if requested (regardless of show_view)
+    plot_obj <- NULL
+    if(create_plot) {
+      plot_title <- create_analysis_title(ques, disag, "median", "stat")
+      plot_obj <- create_visualization(empty_result, "median", plot_title, max_categories,
+                                     original_data = df, ques = ques, disag = disag, max_label_length = max_label_length, font_sizes = font_sizes)
+    }
     
     # Show as HTML table in Viewer pane if requested
     if(show_view) {
@@ -223,6 +285,23 @@ analyze_median <- function(df, ques, disag = NULL, level = NULL, show_view = FAL
       } else {
         View(empty_result)
       }
+    }
+    
+    # Display plot if requested and show_view is TRUE
+    if(create_plot && show_view && !is.null(plot_obj)) {
+      print(plot_obj)
+    }
+    
+    # Return appropriate objects based on what was requested
+    if(dt_table || create_plot) {
+      return_list <- list(table = empty_result)
+      if(dt_table && !is.null(dt_table_obj)) {
+        return_list$dt_table <- dt_table_obj
+      }
+      if(create_plot && !is.null(plot_obj)) {
+        return_list$plot <- plot_obj
+      }
+      return(return_list)
     }
     
     return(empty_result)

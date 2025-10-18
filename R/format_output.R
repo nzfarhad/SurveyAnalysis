@@ -308,8 +308,9 @@ reshape_to_wide <- function(result_df, aggregation_method, disag) {
 #' @param data Data frame to display
 #' @param title Character string for table title
 #' @param filename Character string for download filename
+#' @param display Logical, whether to display the table immediately (default: TRUE)
 #' @return DT table object
-create_dt_table <- function(data, title, filename = "analysis_results") {
+create_dt_table <- function(data, title, filename = "analysis_results", display = TRUE) {
   
   if(requireNamespace("DT", quietly = TRUE)) {
     # Check if this is wide format data (has columns with _ in them)
@@ -454,9 +455,11 @@ create_dt_table <- function(data, title, filename = "analysis_results") {
           )
         )
         
-        # Display the HTML table
-        htmltools::html_print(html_table)
-        return(NULL)
+        # Display the HTML table only if requested
+        if(display) {
+          htmltools::html_print(html_table)
+        }
+        return(html_table)
         
       } else {
         # Fallback to regular DT table
@@ -495,7 +498,10 @@ create_dt_table <- function(data, title, filename = "analysis_results") {
           rownames = FALSE,
           filter = 'top'
         )
-        print(dt_table)
+        # Display the table only if requested
+        if(display) {
+          print(dt_table)
+        }
         return(dt_table)
       }
       
@@ -534,8 +540,10 @@ create_dt_table <- function(data, title, filename = "analysis_results") {
       )
     }
     
-    # Display the table in Viewer pane
-    print(dt_table)
+    # Display the table in Viewer pane only if requested
+    if(display) {
+      print(dt_table)
+    }
     return(dt_table)
   } else {
     # Fallback to basic HTML table
