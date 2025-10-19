@@ -4,7 +4,7 @@ Title: Survey Data Analysis Package for Kobo/SurveyCTO
 Version: 0.1.0
 Date: 2025-10-17
 Authors@R: person("Sayed Farhad Nabizada", email = "nzfarhad@gmail.com", role = c("aut", "cre"))
-Description: A comprehensive R package for analyzing survey data collected with Kobo Toolbox or SurveyCTO. Provides functions for descriptive analysis including single-select, multi-select, and statistical aggregations with support for disaggregation and repeat groups.
+Description: A comprehensive R package for descriptive analysis of survey data collected with Kobo Toolbox or SurveyCTO. Provides functions for descriptive analysis including single-select, multi-select, and statistical aggregations with support for disaggregation and repeat groups.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
