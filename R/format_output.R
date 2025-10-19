@@ -336,7 +336,10 @@ create_dt_table <- function(data, title, filename = "analysis_results", display 
   
   if(requireNamespace("DT", quietly = TRUE)) {
     # Check if this is wide format data (has columns with _ in them)
-    is_wide_format <- any(grepl("_", names(data)))
+    # Wide format data should have columns like "Percentage_Level1", "Count_Level1", etc.
+    # Not just any column with underscores (like "HF_Name_based_on_Sample")
+    col_names <- names(data)
+    is_wide_format <- any(grepl("^(Percentage|Count|Valid|Mean|Median|Sum|FirstQuartile|ThirdQuartile|Min|Max)_", col_names))
     
     if(is_wide_format) {
       # Create a proper wide format table with merged headers
@@ -346,9 +349,9 @@ create_dt_table <- function(data, title, filename = "analysis_results", display 
         # Extract column information
         col_names <- names(data)
         
-        # Find disaggregation levels
-        disag_cols <- col_names[grepl("_", col_names)]
-        disag_levels <- unique(gsub(".*_(.*)$", "\\1", disag_cols))
+        # Find disaggregation levels from wide format columns
+        disag_cols <- col_names[grepl("^(Percentage|Count|Valid|Mean|Median|Sum|FirstQuartile|ThirdQuartile|Min|Max)_", col_names)]
+        disag_levels <- unique(gsub("^(Percentage|Count|Valid|Mean|Median|Sum|FirstQuartile|ThirdQuartile|Min|Max)_(.*)$", "\\2", disag_cols))
         
         # Determine if this is a statistical function (no Response column)
         is_stat_function <- !any(grepl("^Response$", col_names))
