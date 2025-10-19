@@ -217,6 +217,22 @@ tr:hover {
   background-color: #e6f3ff;
 }
 
+.custom-table-wide th {
+  background-color: ', primary_color, ' !important;
+  color: white !important;
+  padding: 12px !important;
+  text-align: left !important;
+  font-weight: bold !important;
+}
+
+caption {
+  caption-side: top;
+  font-size: 1em;
+  text-align: left;
+  color:  ', primary_color, ';
+  margin-bottom: 8px;
+}
+
 /* Code chunk styling */
 pre {
   background-color: #f8f9fa;

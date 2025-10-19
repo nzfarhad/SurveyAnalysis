@@ -469,9 +469,10 @@ create_dt_table <- function(data, title, filename = "analysis_results", display 
         
         # Create the complete table
         html_table <- htmltools::tags$div(
-          htmltools::tags$h3(title, style = "margin-bottom: 20px;"),
           htmltools::tags$table(
+            class = "custom-table-wide",
             style = "border-collapse: collapse; width: 100%; margin-bottom: 20px;",
+            htmltools::tags$caption(title, style = "margin-bottom: 20px;"),
             htmltools::tags$thead(
               header_row1,
               header_row2
