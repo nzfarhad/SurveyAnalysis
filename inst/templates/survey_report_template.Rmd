@@ -1,5 +1,5 @@
 ---
-title: "Health Facility Assessment - Survey Analysis Report"
+title: "Health Facility Assessment - Data Analysis Report"
 author: "John Doe"
 date: "`r Sys.Date()`"
 output: 
@@ -13,10 +13,49 @@ output:
 
 <style>
 /* Custom CSS for Survey Report Template */
-.main-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+.container-fluid.main-container {
+  width: 100% !important;
+  max-width: 1800px !important;
+  margin: 0 auto !important;
+  padding: 20px 40px !important;
+}
+
+/* TOC Sidebar */
+.tocify-wrapper {
+  width: 280px !important;     /* Adjust width of left menu */
+  max-width: 280px !important;
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  padding: 15px;
+}
+
+/* Content area */
+.toc-content {
+  max-width: 1500px !important;   /* adjust overall text width */
+  margin-left: 300px !important;  /* push content right so it doesn't overlap TOC */
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  box-sizing: border-box;
+}
+
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden !important;
+}
+
+/* Optional: adjust spacing on small screens */
+@media (max-width: 992px) {
+  .tocify-wrapper {
+    position: relative !important;
+    width: 100% !important;
+    max-width: none !important;
+    border-right: none;
+    border-bottom: 2px solid #dee2e6;
+  }
+  .toc-content {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+  }
 }
 
 /* Header styling */

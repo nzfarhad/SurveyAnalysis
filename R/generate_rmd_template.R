@@ -114,10 +114,49 @@ generate_custom_css <- function(primary_color, secondary_color) {
   css <- paste0('
 <style>
 /* Custom CSS for Survey Report Template */
-.main-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+.container-fluid.main-container {
+  width: 100% !important;
+  max-width: 1800px !important;
+  margin: 0 auto !important;
+  padding: 20px 40px !important;
+}
+
+/* TOC Sidebar */
+.tocify-wrapper {
+  width: 280px !important;
+  max-width: 280px !important;
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  padding: 15px;
+}
+
+/* Content area */
+.toc-content {
+  max-width: 1500px !important;   
+  margin-left: 300px !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  box-sizing: border-box;
+}
+
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden !important;
+}
+
+/* Optional: adjust spacing on small screens */
+@media (max-width: 992px) {
+  .tocify-wrapper {
+    position: relative !important;
+    width: 100% !important;
+    max-width: none !important;
+    border-right: none;
+    border-bottom: 2px solid #dee2e6;
+  }
+  .toc-content {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+  }
 }
 
 /* Header styling */
@@ -243,7 +282,7 @@ pre {
 #' @return Character string containing YAML header
 generate_yaml_header <- function(survey_name, author, css_content, code_folding, output_format) {
   yaml <- paste0('---
-title: "', survey_name, ' - Survey Analysis Report"
+title: "', survey_name, ' - Data Analysis Report"
 author: "', author, '"
 date: "`r Sys.Date()`"
 output: ')
@@ -375,9 +414,9 @@ multi_response_sep <- "', multi_response_sep, '"
 
 # Demographics
 
-## Example: Single Select Analysis
+### Example: Single Select Analysis
 
-```{r demographics-example}
+```{r demographics-example, echo=FALSE, warning=FALSE}
 # Example analysis - replace with your actual variables
 # result_gender <- analyze_single_select(
 #   df = data_sheet1,
@@ -395,9 +434,9 @@ multi_response_sep <- "', multi_response_sep, '"
 # result_gender$plot
 ```
 
-## Example: Multi Select Analysis
+### Example: Multi Select Analysis
 
-```{r multi-select-example}
+```{r multi-select-example, echo=FALSE, warning=FALSE}
 # Example analysis - replace with your actual variables
 # result_services <- analyze_multi_select(
 #   df = data_sheet1,
@@ -420,9 +459,9 @@ multi_response_sep <- "', multi_response_sep, '"
 
 # Key Indicators
 
-## Example: Statistical Analysis
+### Example: Statistical Analysis
 
-```{r statistical-example}
+```{r statistical-example, echo=FALSE, warning=FALSE}
 # Example analysis - replace with your actual variables
 # result_age <- analyze_mean(
 #   df = data_sheet1,
@@ -440,9 +479,9 @@ multi_response_sep <- "', multi_response_sep, '"
 # result_age$plot
 ```
 
-## Example: Disaggregated Analysis
+### Example: Disaggregated Analysis
 
-```{r disaggregated-example}
+```{r disaggregated-example, echo=FALSE, warning=FALSE}
 # Example analysis by region - replace with your actual variables
 # result_gender_by_region <- analyze_single_select(
 #   df = data_sheet1,
@@ -464,9 +503,9 @@ multi_response_sep <- "', multi_response_sep, '"
 
 # Statistical Analysis
 
-## Example: Multiple Statistical Measures
+### Example: Multiple Statistical Measures
 
-```{r multiple-stats-example}
+```{r multiple-stats-example, echo=FALSE, warning=FALSE}
 # Example analysis - replace with your actual variables
 # 
 # # Mean analysis
