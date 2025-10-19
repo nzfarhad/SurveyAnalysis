@@ -1,0 +1,332 @@
+---
+title: "Health Facility Assessment - Survey Analysis Report"
+author: "John Doe"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+---
+
+<style>
+/* Custom CSS for Survey Report Template */
+.main-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Header styling */
+h1, h2, h3 {
+  color: #003366;
+  border-bottom: 2px solid #003366;
+  padding-bottom: 10px;
+}
+
+/* Table of Contents styling */
+#TOC {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+#TOC .toc-active {
+  color: #003366;
+  font-weight: bold;
+}
+
+/* Links */
+a {
+  color: #FF6B35;
+}
+
+a:hover {
+  color: #003366;
+}
+
+/* Table styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 20px 0;
+}
+
+th {
+  background-color: #003366;
+  color: white;
+  padding: 12px;
+  text-align: left;
+  font-weight: bold;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tr:hover {
+  background-color: #e6f3ff;
+}
+
+/* Code chunk styling */
+pre {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 5px;
+  padding: 15px;
+  overflow-x: auto;
+}
+
+/* Project info box */
+.project-info {
+  background-color: #f8f9fa;
+  border-left: 4px solid #003366;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 5px;
+}
+
+.project-info h3 {
+  color: #003366;
+  margin-top: 0;
+  border-bottom: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .main-container {
+    padding: 10px;
+  }
+  
+  table {
+    font-size: 14px;
+  }
+  
+  th, td {
+    padding: 8px;
+  }
+}
+
+/* Plot styling */
+.plot-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+/* Section dividers */
+.section-divider {
+  border-top: 3px solid #FF6B35;
+  margin: 30px 0;
+}
+</style>
+---
+
+# Project Information
+
+<div class="project-info">
+
+**Organization:** Health Research Organization  
+**Survey:** Health Facility Assessment  
+**Author:** John Doe  
+**Report Date:** `r Sys.Date()`  
+**Data Collection Start:** 2024-01-01  
+**Data Collection End:** 2024-03-31
+
+**Project Summary:**  
+This report presents the findings from a comprehensive health facility assessment conducted across multiple regions. The assessment evaluated facility infrastructure, staffing, service delivery, and patient care quality indicators.
+
+</div>
+
+---
+
+# Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 10,
+  fig.height = 6,
+  fig.align = "center"
+)
+
+# Load required packages
+library(surveyAnalysis)
+library(dplyr)
+library(DT)
+library(ggplot2)
+
+# Set color theme
+color_primary <- "#003366"
+color_secondary <- "#FF6B35"
+
+# Set multi-response separator
+multi_response_sep <- "; "
+
+# Load your data here
+# data_facility <- read.csv("facility_data.csv")
+# data_patient <- read.csv("patient_data.csv")
+```
+
+---
+
+# Facility Analysis
+
+## Province Distribution
+
+```{r province_distribution}
+# Province Distribution
+result_province <- analyze_single_select(
+  df = data_facility,
+  ques = "Province",
+  disag = "all",
+  show_view = FALSE,
+  dt_table = TRUE,
+  create_plot = TRUE
+)
+
+# Display table
+result_province$dt_table
+
+# Display plot
+result_province$plot
+```
+
+## Facility Type Distribution
+
+```{r facility_type_distribution}
+# Facility Type Distribution
+result_facility_type <- analyze_single_select(
+  df = data_facility,
+  ques = "HF_Type",
+  disag = "all",
+  show_view = FALSE,
+  dt_table = TRUE,
+  create_plot = TRUE
+)
+
+# Display table
+result_facility_type$dt_table
+
+# Display plot
+result_facility_type$plot
+```
+
+## Average Number of Staff by Facility Type
+
+```{r staff_by_facility_type}
+# Average Number of Staff by Facility Type
+result_staff_by_type <- analyze_mean(
+  df = data_facility,
+  ques = "N_Staff",
+  disag = "HF_Type",
+  show_view = FALSE,
+  dt_table = TRUE,
+  create_plot = TRUE
+)
+
+# Display table
+result_staff_by_type$dt_table
+
+# Display plot
+result_staff_by_type$plot
+```
+
+---
+
+# Patient Consultation Analysis
+
+## Patient Gender Distribution
+
+```{r patient_gender}
+# Patient Gender Distribution
+result_patient_gender <- analyze_single_select(
+  df = data_patient,
+  ques = "patient_gender",
+  disag = "all",
+  show_view = FALSE,
+  dt_table = TRUE,
+  create_plot = TRUE
+)
+
+# Display table
+result_patient_gender$dt_table
+
+# Display plot
+result_patient_gender$plot
+```
+
+## Diagnosis Distribution
+
+```{r diagnosis_distribution}
+# Diagnosis Distribution
+result_diagnosis <- analyze_multi_select(
+  df = data_patient,
+  ques = "diagnosis",
+  disag = "all",
+  multi_response_sep = multi_response_sep,
+  show_view = FALSE,
+  dt_table = TRUE,
+  create_plot = TRUE
+)
+
+# Display table
+result_diagnosis$dt_table
+
+# Display plot
+result_diagnosis$plot
+```
+
+## Antibiotic Prescription Rate by Facility Type
+
+```{r antibiotic_by_facility_type}
+# Antibiotic Prescription Rate by Facility Type
+result_antibiotic_by_type <- analyze_single_select(
+  df = data_patient,
+  ques = "patient_received_antibiotic",
+  disag = "HF_Type",
+  show_view = FALSE,
+  dt_table = TRUE,
+  create_plot = TRUE
+)
+
+# Display table
+result_antibiotic_by_type$dt_table
+
+# Display plot
+result_antibiotic_by_type$plot
+```
+
+---
+
+# Conclusion
+
+Based on the analysis results above, the following key findings emerge:
+
+1. **Facility Distribution**: The majority of facilities are health centers, with hospitals representing a smaller proportion.
+
+2. **Staffing**: There are significant variations in staffing levels across different facility types, with hospitals having higher average staff numbers.
+
+3. **Patient Demographics**: The patient population shows a balanced gender distribution.
+
+4. **Service Delivery**: Common diagnoses include respiratory and gastrointestinal conditions, with appropriate antibiotic prescription rates varying by facility type.
+
+5. **Quality Indicators**: Further analysis of prescription patterns and service quality indicators would provide additional insights for program improvement.
+
+**Recommendations:**
+- Implement targeted training programs for facilities with lower performance indicators
+- Strengthen monitoring and supervision systems
+- Develop standardized protocols for common conditions
+- Enhance data collection and reporting mechanisms
+
+---

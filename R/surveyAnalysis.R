@@ -37,6 +37,21 @@
 #'   \item{\code{\link{stat_max}}}{Calculate maximum values}
 #' }
 #'
+#' @section Visualization Functions:
+#' \describe{
+#'   \item{\code{\link{create_visualization}}}{Create appropriate visualizations based on analysis type}
+#'   \item{\code{\link{create_percentage_visualization}}}{Create percentage-based charts}
+#'   \item{\code{\link{create_statistical_visualization}}}{Create statistical charts}
+#'   \item{\code{\link{create_box_plot}}}{Create box plots for statistical analysis}
+#'   \item{\code{\link{create_color_palette}}}{Generate color palettes for visualizations}
+#'   \item{\code{\link{truncate_labels}}}{Truncate long labels for better visualization}
+#' }
+#'
+#' @section Report Generation:
+#' \describe{
+#'   \item{\code{\link{generate_rmd_template}}}{Generate R Markdown templates for survey reports}
+#' }
+#'
 #' @section Question Types:
 #' \describe{
 #'   \item{select_one}{Categorical questions with single response}
@@ -52,6 +67,8 @@
 #'   \item Repeat group analysis for complex survey structures
 #'   \item Flexible analysis plans defined in data frames
 #'   \item Customizable multi-response separators
+#'   \item Professional visualizations with customizable color themes
+#'   \item R Markdown template generation for automated report creation
 #' }
 #'
 #' @examples
