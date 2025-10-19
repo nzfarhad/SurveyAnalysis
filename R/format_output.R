@@ -142,7 +142,7 @@ format_analysis_output <- function(result_df, aggregation_method, show_view = FA
 #' @param aggregation_method Character string indicating the aggregation method
 #' @param analysis_type Character string indicating the type of analysis
 #' @return Character string with descriptive title
-create_analysis_title <- function(ques, disag, aggregation_method, analysis_type) {
+create_analysis_title <- function(ques, disag, aggregation_method, analysis_type, max_line_length = 80) {
   
   # Start with the question/variable name
   title_parts <- c()
@@ -159,9 +159,9 @@ create_analysis_title <- function(ques, disag, aggregation_method, analysis_type
   # Add analysis type and aggregation method
   if(!is.null(analysis_type)) {
     if(analysis_type == "single_select") {
-      title_parts <- c(title_parts, "Single Select Analysis - Percentages")
+      title_parts <- c(title_parts, "Question type - Single Select")
     } else if(analysis_type == "multi_select") {
-      title_parts <- c(title_parts, "Multi Select Analysis - Percentages")
+      title_parts <- c(title_parts, "Question type - Multi Select")
     } else if(analysis_type == "stat") {
       # For statistical functions, show the specific method
       agg_title <- switch(aggregation_method,
@@ -190,8 +190,30 @@ create_analysis_title <- function(ques, disag, aggregation_method, analysis_type
     title_parts <- c(title_parts, paste("Analysis -", agg_title))
   }
   
-  # Combine all parts
-  return(paste(title_parts, collapse = " | "))
+  # Fallback
+  if (length(title_parts) == 0) return("Analysis Summary")
+  
+  # Combine first (for character count check)
+  full_title <- paste(title_parts, collapse = " | ")
+  
+  # ✅ Smart split only if title is too long
+  if (nchar(full_title) > max_line_length && length(title_parts) > 1) {
+    
+    # Calculate cumulative length of each part (including separators)
+    cum_lengths <- cumsum(nchar(title_parts) + 3)  # +3 for " | "
+    
+    # Find the last part that keeps total length under max_line_length
+    break_index <- max(which(cum_lengths <= max_line_length))
+    
+    # Build the two-line title cleanly
+    full_title <- paste(
+      paste(title_parts[1:break_index], collapse = " | "),
+      paste(title_parts[(break_index + 1):length(title_parts)], collapse = " | "),
+      sep = "\n"
+    )
+  }
+  
+  return(full_title)
 }
 
 #' Reshape Analysis Results to Wide Format
