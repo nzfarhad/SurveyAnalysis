@@ -16,6 +16,7 @@
 #' @param secondary_color Character string for secondary color (hex code, e.g., "#f27304")
 #' @param multi_response_sep Character string for multi-response separator (default: "; ")
 #' @param code_folding Logical indicating whether to enable code folding in YAML (default: FALSE)
+#' @param output_format Character string specifying output format: "html" or "word" (default: "html")
 #'
 #' @return Creates an R Markdown file at the specified output path
 #'
@@ -38,6 +39,15 @@
 #'   author = "John Doe",
 #'   code_folding = TRUE
 #' )
+#' 
+#' # Create Word document template
+#' generate_rmd_template(
+#'   output_file = "survey_report.Rmd",
+#'   org_name = "My Organization",
+#'   survey_name = "Health Facility Assessment",
+#'   author = "John Doe",
+#'   output_format = "word"
+#' )
 #' }
 #'
 #' @export
@@ -54,11 +64,13 @@ generate_rmd_template <- function(
   primary_color = "#730202",
   secondary_color = "#f27304",
   multi_response_sep = "; ",
-  code_folding = FALSE
+  code_folding = FALSE,
+  output_format = "html"
 ) {
   
   # Validate inputs
   mode <- match.arg(mode, choices = "placeholder")
+  output_format <- match.arg(output_format, choices = c("html", "word"))
   
   # Validate color codes
   if (!grepl("^#[0-9A-Fa-f]{6}$", primary_color)) {
@@ -68,17 +80,21 @@ generate_rmd_template <- function(
     stop("secondary_color must be a valid hex color code (e.g., '#FF6B35')")
   }
   
-  # Generate CSS
-  css_content <- generate_custom_css(primary_color, secondary_color)
+  # Generate CSS (only for HTML output)
+  if (output_format == "html") {
+    css_content <- generate_custom_css(primary_color, secondary_color)
+  } else {
+    css_content <- ""
+  }
   
   # Generate YAML header
-  yaml_header <- generate_yaml_header(survey_name, author, css_content, code_folding)
+  yaml_header <- generate_yaml_header(survey_name, author, css_content, code_folding, output_format)
   
   # Generate placeholder content (always include example code)
   document_content <- generate_placeholder_content(org_name, survey_name, author, 
                                                  data_collection_start, data_collection_end, 
                                                  project_summary, primary_color, secondary_color, 
-                                                 multi_response_sep)
+                                                 multi_response_sep, output_format)
   
   # Combine and write to file (CSS goes after YAML header)
   full_content <- paste(yaml_header, css_content, document_content, sep = "\n")
@@ -222,24 +238,36 @@ pre {
 #' @param survey_name Survey name
 #' @param author Author name
 #' @param css_content CSS content
+#' @param code_folding Whether to enable code folding
+#' @param output_format Output format ("html" or "word")
 #' @return Character string containing YAML header
-generate_yaml_header <- function(survey_name, author, css_content, code_folding) {
+generate_yaml_header <- function(survey_name, author, css_content, code_folding, output_format) {
   yaml <- paste0('---
 title: "', survey_name, ' - Survey Analysis Report"
 author: "', author, '"
 date: "`r Sys.Date()`"
-output: 
+output: ')
+  
+  if (output_format == "html") {
+    yaml <- paste0(yaml, '
   html_document:
     toc: true
     toc_float: true
     toc_depth: 3
     theme: flatly
     highlight: tango')
-  
-  # Only add code_folding if code_folding is TRUE
-  if (code_folding) {
-    yaml <- paste0(yaml, '
+    
+    # Only add code_folding if code_folding is TRUE
+    if (code_folding) {
+      yaml <- paste0(yaml, '
     code_folding: show')
+    }
+  } else if (output_format == "word") {
+    yaml <- paste0(yaml, '
+  word_document:
+    toc: true
+    toc_depth: 3
+    reference_docx: default')
   }
   
   yaml <- paste0(yaml, '
@@ -263,9 +291,11 @@ output:
 generate_placeholder_content <- function(org_name, survey_name, author, 
                                         data_collection_start, data_collection_end,
                                         project_summary, primary_color, secondary_color,
-                                        multi_response_sep) {
+                                        multi_response_sep, output_format) {
   
-  content <- paste0('
+  # Generate project information section based on output format
+  if (output_format == "html") {
+    content <- paste0('
 # Project Information
 
 <div class="project-info">
@@ -274,6 +304,15 @@ generate_placeholder_content <- function(org_name, survey_name, author,
 **Survey:** ', survey_name, '  
 **Author:** ', author, '  
 **Report Date:** `r Sys.Date()`')
+  } else {
+    content <- paste0('
+# Project Information
+
+**Organization:** ', org_name, '  
+**Survey:** ', survey_name, '  
+**Author:** ', author, '  
+**Report Date:** `r Sys.Date()`')
+  }
 
   if (!is.null(data_collection_start)) {
     content <- paste0(content, '  
@@ -290,7 +329,14 @@ generate_placeholder_content <- function(org_name, survey_name, author,
 **Project Summary:**  
 ', project_summary, '
 
-</div>
+')
+
+  # Close HTML div only for HTML output
+  if (output_format == "html") {
+    content <- paste0(content, '</div>')
+  }
+
+  content <- paste0(content, '
 
 ---
 
