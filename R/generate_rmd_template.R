@@ -12,8 +12,8 @@
 #' @param data_collection_start Character string for data collection start date
 #' @param data_collection_end Character string for data collection end date
 #' @param project_summary Character string for project summary
-#' @param primary_color Character string for primary color (hex code, e.g., "#003366")
-#' @param secondary_color Character string for secondary color (hex code, e.g., "#FF6B35")
+#' @param primary_color Character string for primary color (hex code, e.g., "#730202")
+#' @param secondary_color Character string for secondary color (hex code, e.g., "#f27304")
 #' @param multi_response_sep Character string for multi-response separator (default: "; ")
 #' @param show_code Logical indicating whether to show code chunks by default (default: FALSE)
 #'
@@ -63,8 +63,8 @@ generate_rmd_template <- function(
   data_collection_start = NULL,
   data_collection_end = NULL,
   project_summary = "Project summary goes here",
-  primary_color = "#003366",
-  secondary_color = "#FF6B35",
+  primary_color = "#730202",
+  secondary_color = "#f27304",
   multi_response_sep = "; ",
   show_code = FALSE
 ) {
