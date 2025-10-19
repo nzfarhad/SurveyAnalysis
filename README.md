@@ -385,4 +385,4 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ## License
 
-This package is licensed under the MIT License.
+This package is licensed under the GPL License.
