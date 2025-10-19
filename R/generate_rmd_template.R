@@ -15,7 +15,7 @@
 #' @param primary_color Character string for primary color (hex code, e.g., "#730202")
 #' @param secondary_color Character string for secondary color (hex code, e.g., "#f27304")
 #' @param multi_response_sep Character string for multi-response separator (default: "; ")
-#' @param show_code Logical indicating whether to show code chunks by default (default: FALSE)
+#' @param code_folding Logical indicating whether to enable code folding in YAML (default: FALSE)
 #'
 #' @return Creates an R Markdown file at the specified output path
 #'
@@ -30,13 +30,13 @@
 #'   project_summary = "Assessment of health facilities in the region"
 #' )
 #' 
-#' # Create template with code visible
+#' # Create template with code folding enabled
 #' generate_rmd_template(
 #'   output_file = "survey_report.Rmd",
 #'   org_name = "My Organization",
 #'   survey_name = "Health Facility Assessment",
 #'   author = "John Doe",
-#'   show_code = TRUE
+#'   code_folding = TRUE
 #' )
 #' }
 #'
@@ -54,7 +54,7 @@ generate_rmd_template <- function(
   primary_color = "#730202",
   secondary_color = "#f27304",
   multi_response_sep = "; ",
-  show_code = FALSE
+  code_folding = FALSE
 ) {
   
   # Validate inputs
@@ -72,13 +72,13 @@ generate_rmd_template <- function(
   css_content <- generate_custom_css(primary_color, secondary_color)
   
   # Generate YAML header
-  yaml_header <- generate_yaml_header(survey_name, author, css_content, show_code)
+  yaml_header <- generate_yaml_header(survey_name, author, css_content, code_folding)
   
-  # Generate placeholder content
+  # Generate placeholder content (always include example code)
   document_content <- generate_placeholder_content(org_name, survey_name, author, 
                                                  data_collection_start, data_collection_end, 
                                                  project_summary, primary_color, secondary_color, 
-                                                 multi_response_sep, show_code)
+                                                 multi_response_sep)
   
   # Combine and write to file (CSS goes after YAML header)
   full_content <- paste(yaml_header, css_content, document_content, sep = "\n")
@@ -223,7 +223,7 @@ pre {
 #' @param author Author name
 #' @param css_content CSS content
 #' @return Character string containing YAML header
-generate_yaml_header <- function(survey_name, author, css_content, show_code) {
+generate_yaml_header <- function(survey_name, author, css_content, code_folding) {
   yaml <- paste0('---
 title: "', survey_name, ' - Survey Analysis Report"
 author: "', author, '"
@@ -236,8 +236,8 @@ output:
     theme: flatly
     highlight: tango')
   
-  # Only add code_folding if show_code is TRUE
-  if (show_code) {
+  # Only add code_folding if code_folding is TRUE
+  if (code_folding) {
     yaml <- paste0(yaml, '
     code_folding: show')
   }
@@ -263,7 +263,7 @@ output:
 generate_placeholder_content <- function(org_name, survey_name, author, 
                                         data_collection_start, data_collection_end,
                                         project_summary, primary_color, secondary_color,
-                                        multi_response_sep, show_code) {
+                                        multi_response_sep) {
   
   content <- paste0('
 # Project Information
@@ -294,11 +294,7 @@ generate_placeholder_content <- function(org_name, survey_name, author,
 
 ---
 
-# Setup')
-
-  # Add setup code chunk only if show_code is TRUE
-  if (show_code) {
-    content <- paste0(content, '
+# Setup
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -327,12 +323,7 @@ multi_response_sep <- "', multi_response_sep, '"
 # data <- read.csv("your_data_file.csv")
 # data_sheet1 <- data  # or load specific sheet
 # data_sheet2 <- read.csv("sheet2.csv")  # if multiple sheets
-```')
-  }
-
-  # Add example sections only if show_code is TRUE
-  if (show_code) {
-    content <- paste0(content, '
+```
 
 ---
 
@@ -482,48 +473,6 @@ Remember to:
 2. Set `dt_table = TRUE` and `create_plot = TRUE` to get both outputs
 3. Access results using `$dt_table` and `$plot` components
 4. Use appropriate disaggregation variables for subgroup analysis')
-  } else {
-    # When show_code is FALSE, provide guidance without code examples
-    content <- paste0(content, '
-
----
-
-# Analysis Sections
-
-This template provides a structure for your survey analysis report. Add your analysis sections below:
-
-## Demographics
-Add demographic analysis here.
-
-## Key Indicators  
-Add key indicator analysis here.
-
-## Statistical Analysis
-Add statistical analysis here.
-
-## Additional Analysis
-Add any additional analysis sections as needed.
-
----
-
-# Analysis Guidelines
-
-Use the surveyAnalysis package functions for your analysis:
-
-- **Single select questions**: `analyze_single_select()`
-- **Multi select questions**: `analyze_multi_select()`  
-- **Mean calculations**: `analyze_mean()`
-- **Median calculations**: `analyze_median()`
-- **Sum calculations**: `analyze_sum()`
-- **Quartile calculations**: `analyze_first_quartile()`, `analyze_third_quartile()`
-- **Min/Max calculations**: `analyze_min()`, `analyze_max()`
-
-**Important parameters:**
-- Set `show_view = FALSE` to prevent automatic display
-- Set `dt_table = TRUE` and `create_plot = TRUE` to get both outputs
-- Access results using `$dt_table` and `$plot` components
-- Use appropriate disaggregation variables for subgroup analysis')
-  }
 
   content <- paste0(content, '
 
