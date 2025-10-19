@@ -99,6 +99,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       plot_title <- create_analysis_title(ques, "all", "perc", "single_select")
       plot_obj <- create_visualization(result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
+                                     original_data = df, ques = ques, disag = NULL,
                                      chart_type = chart_type, max_label_length = max_label_length, font_sizes = font_sizes)
     }
     
@@ -220,6 +221,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       plot_title <- create_analysis_title(ques, disag, "perc", "single_select")
       plot_obj <- create_visualization(combined_result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
+                                     original_data = df, ques = ques, disag = disag,
                                      chart_type = chart_type, max_label_length = max_label_length, font_sizes = font_sizes)
     }
     
@@ -279,6 +281,7 @@ analyze_single_select <- function(df, ques, disag = NULL, level = NULL, show_vie
       plot_title <- create_analysis_title(ques, disag, "perc", "single_select")
       plot_obj <- create_visualization(empty_result, "perc", plot_title, max_categories,
                                      color_primary = "#730202", color_secondary = "#f27304",
+                                     original_data = df, ques = ques, disag = disag,
                                      chart_type = chart_type, max_label_length = max_label_length, font_sizes = font_sizes)
     }
     

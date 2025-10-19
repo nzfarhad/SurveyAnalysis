@@ -53,12 +53,12 @@ create_visualization <- function(data, analysis_type, title, max_categories = 10
   # Determine if this is disaggregated data
   # Check for wide format (columns with underscores) or explicit disaggregation columns
   is_disaggregated <- any(grepl("Percentage_|Mean_|Median_|Sum_|Min_|Max_|FirstQuartile_|ThirdQuartile_", names(data))) || 
-                     any(grepl("DisaggLevel|Level|Region|Province", names(data), ignore.case = TRUE))
+                     (!is.null(disag) && any(grepl(disag, names(data), ignore.case = TRUE)))
   
   # Handle different analysis types
   if (analysis_type %in% c("perc", "proportion", "percentage")) {
     return(create_percentage_visualization(data, title, max_categories, 
-                                         color_primary, color_secondary, is_disaggregated, chart_type, max_label_length, font_sizes))
+                                         color_primary, color_secondary, is_disaggregated, chart_type, max_label_length, font_sizes, disag))
   } else if (analysis_type %in% c("mean", "median")) {
     # For mean and median, try to create box plots if original data is available
     if (!is.null(original_data) && !is.null(ques)) {
@@ -67,11 +67,11 @@ create_visualization <- function(data, analysis_type, title, max_categories = 10
     } else {
       # Fall back to regular statistical charts
       return(create_statistical_visualization(data, analysis_type, title, max_categories,
-                                            color_primary, color_secondary, is_disaggregated, font_sizes))
+                                            color_primary, color_secondary, is_disaggregated, font_sizes, disag))
     }
   } else if (analysis_type %in% c("sum", "min", "max", "1stq", "3rdq")) {
     return(create_statistical_visualization(data, analysis_type, title, max_categories,
-                                          color_primary, color_secondary, is_disaggregated, font_sizes))
+                                          color_primary, color_secondary, is_disaggregated, font_sizes, disag))
   } else {
     warning(paste("Visualization not implemented for analysis type:", analysis_type))
     return(NULL)
@@ -93,7 +93,7 @@ create_visualization <- function(data, analysis_type, title, max_categories = 10
 #'
 #' @export
 create_percentage_visualization <- function(data, title, max_categories, 
-                                          color_primary, color_secondary, is_disaggregated, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
+                                          color_primary, color_secondary, is_disaggregated, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10), disag = NULL) {
   
   # Check if we have percentage data
   perc_cols <- names(data)[grepl("Percentage|perc", names(data), ignore.case = TRUE)]
@@ -104,7 +104,7 @@ create_percentage_visualization <- function(data, title, max_categories,
   
   if (is_disaggregated) {
     return(create_disaggregated_percentage_chart(data, title, max_categories, 
-                                               color_primary, color_secondary, chart_type, max_label_length, font_sizes))
+                                               color_primary, color_secondary, chart_type, max_label_length, font_sizes, disag))
   } else {
     return(create_simple_percentage_chart(data, title, max_categories, 
                                         color_primary, color_secondary, chart_type, max_label_length, font_sizes))
@@ -250,7 +250,7 @@ create_simple_percentage_chart <- function(data, title, max_categories,
 #'
 #' @export
 create_disaggregated_percentage_chart <- function(data, title, max_categories, 
-                                                color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
+                                                color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10), disag = NULL) {
   
   # Check if this is wide format data
   # Wide format has columns like "Percentage_Kunar", "Percentage_Laghman", etc.
@@ -262,7 +262,7 @@ create_disaggregated_percentage_chart <- function(data, title, max_categories,
                                              color_primary, color_secondary, chart_type, max_label_length, font_sizes))
   } else {
     return(create_long_format_percentage_chart(data, title, max_categories, 
-                                             color_primary, color_secondary, chart_type, max_label_length, font_sizes))
+                                             color_primary, color_secondary, chart_type, max_label_length, font_sizes, disag))
   }
 }
 
@@ -419,12 +419,15 @@ create_wide_format_percentage_chart <- function(data, title, max_categories,
 #'
 #' @export
 create_long_format_percentage_chart <- function(data, title, max_categories, 
-                                               color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
+                                               color_primary, color_secondary, chart_type = "auto", max_label_length = 12, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10), disag = NULL) {
   
   # Find relevant columns
   perc_col <- names(data)[grepl("Percentage|perc", names(data), ignore.case = TRUE)][1]
   response_col <- names(data)[grepl("Response|Var1", names(data), ignore.case = TRUE)][1]
-  level_col <- names(data)[grepl("Level|Disagg|Region|Province", names(data), ignore.case = TRUE)][1]
+  level_col <- names(data)[grepl("Level|Disagg", names(data), ignore.case = TRUE)][1]
+  if ((is.null(level_col) || length(level_col) == 0 || is.na(level_col)) && !is.null(disag)) {
+    level_col <- names(data)[grepl(disag, names(data), ignore.case = TRUE)][1]
+  }
   
   if (is.null(perc_col) || is.null(response_col) || is.null(level_col)) {
     warning("Required columns not found for long format percentage visualization")
@@ -716,7 +719,7 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
 #'
 #' @export
 create_statistical_visualization <- function(data, analysis_type, title, max_categories, 
-                                           color_primary, color_secondary, is_disaggregated, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10)) {
+                                           color_primary, color_secondary, is_disaggregated, font_sizes = list(plot_title = 12, legend_title = 10, legend_text = 10, geom_text = 3, axis_title = 10), disag = NULL) {
   
   # For mean and median, create box plots if we have access to original data
   if (analysis_type %in% c("mean", "median")) {
@@ -855,7 +858,7 @@ create_disaggregated_statistical_chart <- function(data, analysis_type, title, m
                                                color_primary, color_secondary, original_data, ques, disag))
   } else {
     return(create_long_format_statistical_chart(data, analysis_type, title, max_categories,
-                                              color_primary, color_secondary))
+                                              color_primary, color_secondary, disag))
   }
 }
 
@@ -959,7 +962,7 @@ create_wide_format_statistical_chart <- function(data, analysis_type, title, max
 #'
 #' @export
 create_long_format_statistical_chart <- function(data, analysis_type, title, max_categories,
-                                               color_primary, color_secondary) {
+                                               color_primary, color_secondary, disag = NULL) {
   
   # Find relevant columns
   analysis_title <- stringr::str_to_title(analysis_type)
@@ -971,7 +974,10 @@ create_long_format_statistical_chart <- function(data, analysis_type, title, max
     result_col <- names(data)[grepl("Mean|Median|Sum|Min|Max|First|Third", names(data))][1]
   }
   
-  level_col <- names(data)[grepl("Level|Disagg|Region|Province", names(data), ignore.case = TRUE)][1]
+  level_col <- names(data)[grepl("Level|Disagg", names(data), ignore.case = TRUE)][1]
+  if ((is.null(level_col) || length(level_col) == 0 || is.na(level_col)) && !is.null(disag)) {
+    level_col <- names(data)[grepl(disag, names(data), ignore.case = TRUE)][1]
+  }
   
   if (is.null(result_col) || is.null(level_col)) {
     warning("Required columns not found for long format statistical visualization")
