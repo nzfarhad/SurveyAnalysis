@@ -1,11 +1,11 @@
 #' Generate R Markdown Template for Survey Reports
 #'
 #' Creates a professional R Markdown template for surveyCTO/Kobo survey analysis reports.
-#' Supports two modes: placeholder template for manual coding or auto-generated code based on analysis plan.
+#' Generates a placeholder template with example code for manual customization.
 #'
 #' @param output_file Character string specifying the output file path (e.g., "survey_report.Rmd")
-#' @param mode Character string specifying the template mode: "placeholder" or "analysis_plan"
-#' @param analysis_plan Data frame containing analysis plan (required for "analysis_plan" mode)
+#' @param mode Character string specifying the template mode: "placeholder"
+#' @param analysis_plan Data frame containing analysis plan (not used, kept for compatibility)
 #' @param org_name Character string for organization name
 #' @param survey_name Character string for survey name
 #' @param author Character string for report author
@@ -24,7 +24,6 @@
 #' # Create placeholder template (code hidden by default)
 #' generate_rmd_template(
 #'   output_file = "survey_report.Rmd",
-#'   mode = "placeholder",
 #'   org_name = "My Organization",
 #'   survey_name = "Health Facility Assessment",
 #'   author = "John Doe",
@@ -34,28 +33,17 @@
 #' # Create template with code visible
 #' generate_rmd_template(
 #'   output_file = "survey_report.Rmd",
-#'   mode = "placeholder",
 #'   org_name = "My Organization",
 #'   survey_name = "Health Facility Assessment",
 #'   author = "John Doe",
 #'   show_code = TRUE
-#' )
-#' 
-#' # Create template from analysis plan
-#' generate_rmd_template(
-#'   output_file = "survey_report.Rmd",
-#'   mode = "analysis_plan",
-#'   analysis_plan = my_analysis_plan,
-#'   org_name = "My Organization",
-#'   survey_name = "Health Facility Assessment",
-#'   author = "John Doe"
 #' )
 #' }
 #'
 #' @export
 generate_rmd_template <- function(
   output_file,
-  mode = c("placeholder", "analysis_plan"),
+  mode = "placeholder",
   analysis_plan = NULL,
   org_name = "Organization Name",
   survey_name = "Survey Name",
@@ -70,19 +58,7 @@ generate_rmd_template <- function(
 ) {
   
   # Validate inputs
-  mode <- match.arg(mode)
-  
-  if (mode == "analysis_plan" && is.null(analysis_plan)) {
-    stop("analysis_plan is required when mode = 'analysis_plan'")
-  }
-  
-  if (!is.null(analysis_plan)) {
-    required_cols <- c("variable", "label", "kobo_type", "aggregation_method", "disaggregation", "sheet")
-    missing_cols <- setdiff(required_cols, names(analysis_plan))
-    if (length(missing_cols) > 0) {
-      stop(paste("Missing required columns in analysis_plan:", paste(missing_cols, collapse = ", ")))
-    }
-  }
+  mode <- match.arg(mode, choices = "placeholder")
   
   # Validate color codes
   if (!grepl("^#[0-9A-Fa-f]{6}$", primary_color)) {
@@ -98,18 +74,11 @@ generate_rmd_template <- function(
   # Generate YAML header
   yaml_header <- generate_yaml_header(survey_name, author, css_content, show_code)
   
-  # Generate document content based on mode
-  if (mode == "placeholder") {
-    document_content <- generate_placeholder_content(org_name, survey_name, author, 
-                                                   data_collection_start, data_collection_end, 
-                                                   project_summary, primary_color, secondary_color, 
-                                                   multi_response_sep, show_code)
-  } else {
-    document_content <- generate_analysis_plan_content(analysis_plan, org_name, survey_name, author,
-                                                      data_collection_start, data_collection_end,
-                                                      project_summary, primary_color, secondary_color,
-                                                      multi_response_sep, show_code)
-  }
+  # Generate placeholder content
+  document_content <- generate_placeholder_content(org_name, survey_name, author, 
+                                                 data_collection_start, data_collection_end, 
+                                                 project_summary, primary_color, secondary_color, 
+                                                 multi_response_sep, show_code)
   
   # Combine and write to file (CSS goes after YAML header)
   full_content <- paste(yaml_header, css_content, document_content, sep = "\n")
@@ -118,11 +87,6 @@ generate_rmd_template <- function(
   cat(full_content, file = output_file)
   
   message(paste("R Markdown template created:", output_file))
-  message(paste("Mode:", mode))
-  if (mode == "analysis_plan") {
-    message(paste("Variables to analyze:", nrow(analysis_plan)))
-    message(paste("Data sheets:", length(unique(analysis_plan$sheet))))
-  }
 }
 
 #' Generate Custom CSS for Theme Integration
@@ -574,236 +538,3 @@ Add your conclusions and recommendations here.
   return(content)
 }
 
-#' Generate Analysis Plan Content
-#'
-#' @param analysis_plan Analysis plan data frame
-#' @param org_name Organization name
-#' @param survey_name Survey name
-#' @param author Author name
-#' @param data_collection_start Data collection start date
-#' @param data_collection_end Data collection end date
-#' @param project_summary Project summary
-#' @param primary_color Primary color
-#' @param secondary_color Secondary color
-#' @param multi_response_sep Multi-response separator
-#' @return Character string containing analysis plan content
-generate_analysis_plan_content <- function(analysis_plan, org_name, survey_name, author,
-                                          data_collection_start, data_collection_end,
-                                          project_summary, primary_color, secondary_color,
-                                          multi_response_sep, show_code) {
-  
-  content <- paste0('
-# Project Information
-
-<div class="project-info">
-
-**Organization:** ', org_name, '  
-**Survey:** ', survey_name, '  
-**Author:** ', author, '  
-**Report Date:** `r Sys.Date()`')
-
-  if (!is.null(data_collection_start)) {
-    content <- paste0(content, '  
-**Data Collection Start:** ', data_collection_start)
-  }
-  
-  if (!is.null(data_collection_end)) {
-    content <- paste0(content, '  
-**Data Collection End:** ', data_collection_end)
-  }
-  
-  content <- paste0(content, '
-
-**Project Summary:**  
-', project_summary, '
-
-</div>
-
----
-
-# Setup')
-
-  # Add setup code chunk only if show_code is TRUE
-  if (show_code) {
-    content <- paste0(content, '
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-  echo = TRUE,
-  warning = FALSE,
-  message = FALSE,
-  fig.width = 10,
-  fig.height = 6,
-  fig.align = "center"
-)
-
-# Load required packages
-library(surveyAnalysis)
-library(dplyr)
-library(DT)
-library(ggplot2)
-
-# Set color theme
-color_primary <- "', primary_color, '"
-color_secondary <- "', secondary_color, '"
-
-# Set multi-response separator
-multi_response_sep <- "', multi_response_sep, '"
-
-# Load your data here
-# data_sheet1 <- read.csv("sheet1.csv")
-# data_sheet2 <- read.csv("sheet2.csv")
-# Add more data sheets as needed
-```')
-  }
-
-  content <- paste0(content, '
-
-')
-
-  # Group analysis plan by sheet
-  sheets <- unique(analysis_plan$sheet)
-  sheets <- sheets[!is.na(sheets)]
-  
-  for (sheet in sheets) {
-    sheet_plan <- analysis_plan[analysis_plan$sheet == sheet & !is.na(analysis_plan$sheet), ]
-    
-    if (nrow(sheet_plan) > 0) {
-      content <- paste0(content, '
----
-
-# ', stringr::str_to_title(sheet), ' Analysis
-
-')
-      
-      # Generate code for each variable in the sheet (only if show_code is TRUE)
-      if (show_code) {
-        for (i in seq_len(nrow(sheet_plan))) {
-          var_info <- sheet_plan[i, ]
-          
-          # Determine analysis function
-          analysis_function <- determine_analysis_function(var_info$kobo_type, var_info$aggregation_method)
-          
-          if (!is.null(analysis_function)) {
-            # Generate code chunk
-            code_chunk <- generate_analysis_code_chunk(var_info, analysis_function, sheet, multi_response_sep)
-            content <- paste0(content, code_chunk, '\n')
-          }
-        }
-      } else {
-        # When show_code is FALSE, just list the variables that would be analyzed
-        content <- paste0(content, '
-## Variables to Analyze
-
-The following variables will be analyzed in this section:
-
-')
-        for (i in seq_len(nrow(sheet_plan))) {
-          var_info <- sheet_plan[i, ]
-          content <- paste0(content, '- **', var_info$label, '** (', var_info$variable, ') - ', 
-                           var_info$kobo_type, ' - ', var_info$aggregation_method, '\n')
-        }
-        content <- paste0(content, '
-
-Add your analysis code here using the appropriate `analyze_*` functions.
-
-')
-      }
-    }
-  }
-  
-  content <- paste0(content, '
----
-
-# Conclusion
-
-Add your conclusions and recommendations here based on the analysis results above.
-
-')
-  
-  return(content)
-}
-
-#' Determine Analysis Function Based on Question Type and Aggregation Method
-#'
-#' @param kobo_type Question type from Kobo
-#' @param aggregation_method Aggregation method
-#' @return Character string with function name or NULL
-determine_analysis_function <- function(kobo_type, aggregation_method) {
-  
-  if (kobo_type == "select_one" && aggregation_method %in% c("proportion", "perc")) {
-    return("analyze_single_select")
-  } else if (kobo_type == "select_multiple" && aggregation_method %in% c("proportion", "perc")) {
-    return("analyze_multi_select")
-  } else if (kobo_type == "integer" && aggregation_method == "mean") {
-    return("analyze_mean")
-  } else if (kobo_type == "integer" && aggregation_method == "median") {
-    return("analyze_median")
-  } else if (kobo_type == "integer" && aggregation_method == "sum") {
-    return("analyze_sum")
-  } else if (kobo_type == "integer" && aggregation_method == "1stq") {
-    return("analyze_first_quartile")
-  } else if (kobo_type == "integer" && aggregation_method == "3rdq") {
-    return("analyze_third_quartile")
-  } else if (kobo_type == "integer" && aggregation_method == "min") {
-    return("analyze_min")
-  } else if (kobo_type == "integer" && aggregation_method == "max") {
-    return("analyze_max")
-  }
-  
-  return(NULL)
-}
-
-#' Generate Analysis Code Chunk
-#'
-#' @param var_info Variable information from analysis plan
-#' @param analysis_function Analysis function name
-#' @param sheet Data sheet name
-#' @param multi_response_sep Multi-response separator
-#' @return Character string containing code chunk
-generate_analysis_code_chunk <- function(var_info, analysis_function, sheet, multi_response_sep) {
-  
-  # Clean variable name for R object naming
-  clean_var_name <- gsub("[^A-Za-z0-9_]", "_", var_info$variable)
-  
-  # Handle disaggregation
-  disag_var <- if (!is.na(var_info$disaggregation) && var_info$disaggregation != "all") {
-    var_info$disaggregation
-  } else {
-    "all"
-  }
-  
-  # Generate code chunk
-  code_chunk <- paste0('
-## ', var_info$label, '
-
-```{r ', clean_var_name, '}
-# ', var_info$label, '
-result_', clean_var_name, ' <- ', analysis_function, '(
-  df = data_', sheet, ',
-  ques = "', var_info$variable, '",
-  disag = "', disag_var, '",')
-  
-  # Add multi_response_sep for multi-select questions
-  if (analysis_function == "analyze_multi_select") {
-    code_chunk <- paste0(code_chunk, '
-  multi_response_sep = multi_response_sep,')
-  }
-  
-  code_chunk <- paste0(code_chunk, '
-  show_view = FALSE,
-  dt_table = TRUE,
-  create_plot = TRUE
-)
-
-# Display table
-result_', clean_var_name, '$dt_table
-
-# Display plot
-result_', clean_var_name, '$plot
-```
-
-')
-  
-  return(code_chunk)
-}

@@ -49,7 +49,7 @@
 #'
 #' @section Report Generation:
 #' \describe{
-#'   \item{\code{\link{generate_rmd_template}}}{Generate R Markdown templates for survey reports}
+#'   \item{\code{\link{generate_rmd_template}}}{Generate R Markdown placeholder templates for survey reports}
 #' }
 #'
 #' @section Question Types:
@@ -68,7 +68,7 @@
 #'   \item Flexible analysis plans defined in data frames
 #'   \item Customizable multi-response separators
 #'   \item Professional visualizations with customizable color themes
-#'   \item R Markdown template generation for automated report creation
+#'   \item R Markdown placeholder template generation for report creation
 #' }
 #'
 #' @examples
