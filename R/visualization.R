@@ -172,7 +172,7 @@ create_simple_percentage_chart <- function(data, title, max_categories,
       ggplot2::coord_polar(theta = "y") +
       ggplot2::geom_text(ggplot2::aes(label = paste0(!!ggplot2::sym(perc_col), "%", "\n", !!ggplot2::sym(response_col))), 
                         position = ggplot2::position_stack(vjust = 0.5), 
-                        size = font_sizes$geom_text, fontface = "bold") +
+                        size = font_sizes$geom_text, fontface = "bold", color = "white") +
       ggplot2::labs(
         title = title,
         fill = "Response"
