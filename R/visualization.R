@@ -598,16 +598,16 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
       ggplot2::stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "#FFD700", color = "#B8860B") +
       ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "#2E8B57") +
       ggplot2::annotate("text", x = 1, y = mean_val, 
-                       label = paste0("Mean: ", round(mean_val, 2)), 
+                       label = paste0(round(mean_val, 2)), 
                        vjust = -1.5, size = 3, color = "#B8860B", fontface = "bold") +
       ggplot2::annotate("text", x = 1, y = median_val, 
-                       label = paste0("Median: ", round(median_val, 2)), 
+                       label = paste0(round(median_val, 2)), 
                        vjust = -3, size = 3, color = "#2E8B57", fontface = "bold") +
       ggplot2::labs(
         title = title,
         x = "",
         y = ques,
-        subtitle = "Gold diamond = Mean, Green circle = Median"
+        subtitle = "Gold diamond = Mean, Green daimond = Median"
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(
@@ -618,7 +618,8 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
         axis.title = ggplot2::element_text(size = font_sizes$axis_title),
         panel.grid.major.x = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank(),
-        plot.margin = ggplot2::margin(20, 20, 20, 20)
+        plot.margin = ggplot2::margin(20, 20, 20, 20),
+        legend.position = "none",
       )
     
     return(p)
@@ -675,17 +676,17 @@ create_box_plot <- function(data, ques, disag, analysis_type, title, color_prima
     ggplot2::stat_summary(fun = median, geom = "point", shape = 18, size = 3, color = "#2E8B57") +
     ggplot2::geom_text(data = summary_stats, 
                       ggplot2::aes_string(x = disag, y = "mean_val", 
-                                        label = "paste0('Mean: ', round(mean_val, 2))"), 
+                                        label = "paste0(round(mean_val, 2))"), 
                       vjust = -1.5, size = 3, color = "#B8860B", fontface = "bold") +
     ggplot2::geom_text(data = summary_stats, 
                       ggplot2::aes_string(x = disag, y = "median_val", 
-                                        label = "paste0('Median: ', round(median_val, 2))"), 
+                                        label = "paste0(round(median_val, 2))"), 
                       vjust = -3, size = 3, color = "#2E8B57", fontface = "bold") +
     ggplot2::labs(
       title = title,
       x = disag,
       y = ques,
-      subtitle = "Gold diamond = Mean, Green circle = Median"
+      subtitle = "Gold diamond = Mean, Green diamon = Median"
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
